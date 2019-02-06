@@ -1,0 +1,220 @@
+<html>
+<head>
+<meta charset="utf-8"/>
+<title>js-canvas-test</title>
+<script>
+
+'use strict';
+
+function log() {
+	console.log([...arguments]);
+}
+
+function image_load(name) {
+	return new Promise((resolve, reject) => {
+		const image = new Image();
+		image.onload = () => resolve(image);
+		image.src = name + '.png';
+	});
+}
+
+function sleep(ms) {
+	return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function pixel_data(nodeCanvas, image) {
+	// TODO better create a large enough canvas with its own context
+	const ctx = nodeCanvas.getContext('2d');
+	// Uint8ClampedArray RGBA
+	if((image.width >= nodeCanvas.width) || (image.height >= nodeCanvas.height)) {
+		throw 'Canvas Too Small';
+	}
+	ctx.drawImage(image, 0, 0, image.width, image.height);
+	return {data: ctx.getImageData(0, 0, image.width, image.height).data, width: image.width, height: image.height};
+}
+
+function pixel_rgb(pixel_data, x, y) {
+	const data = pixel_data.data;
+	const offset = ((y * pixel_data.width) + x) * 4;
+	function toHex(number) {
+		return ('0' + number.toString(16)).substr(-2);
+	}
+	return '#' + toHex(data[offset + 0]) + toHex(data[offset + 1]) + toHex(data[offset + 2]);
+}
+
+function clamp(value, value_min, value_max) {
+	if(value < value_min) {
+		return value_min;
+	} else if(value > value_max) {
+		return value_max;
+	}
+	return value;
+}
+
+async function main() {
+	const block_type_to_image = {
+		'#996600': await image_load('dirt'),
+		'#663300': await image_load('cave'),
+		'#00cc00': await image_load('grass'),
+		'#66ffff': await image_load('air'),
+		'#000099': await image_load('night'),
+		'#999999': await image_load('wall'),
+		'#666666': await image_load('steel'),
+		'#ffff00': await image_load('light'),
+		'#ffffff': await image_load('bright'),
+	}
+
+	const light = [await image_load('ligth1'), await image_load('ligth3'), await image_load('ligth4'), await image_load('ligth3')];
+	const bright = [await image_load('bright1')]
+
+	const map = await image_load('map');
+
+	const nodeCanvas = document.getElementById('canvas');
+	const nodeLight = document.getElementById('canvas_light');
+
+	const map_data = pixel_data(nodeCanvas, map);
+
+	log(nodeCanvas.width, nodeCanvas.height);
+	const ctx = nodeCanvas.getContext('2d');
+	const ctxLight = nodeLight.getContext('2d');
+	ctx.imageSmoothingEnabled = false;
+	const nodeTime = document.getElementById('time');
+
+	let timePrevious = performance.now();
+	let fpsAverage = 0.0;
+
+	let center_x = Math.floor(map.width / 2);
+	let center_y = Math.floor(map.height / 2);
+
+	let key_states = {'ArrowLeft': false, 'ArrowRight': false, 'ArrowUp': false, 'ArrowDown': false};
+
+	function input(event) {
+		const speed_factor = 1;
+		//log(event.type, event.key);
+		if((event.type === 'keydown') && (event.key === 'Enter')) {
+			//
+		} else if((event.type === 'keydown')) {
+			key_states[event.key] = true;
+		} else if((event.type === 'keyup')) {
+			key_states[event.key] = false;
+		}
+	}
+
+	async function loop() {
+		move();
+		draw();
+
+		//await sleep(25);
+
+		window.requestAnimationFrame(loop);
+	}
+
+	function move() {
+		// TODO is FPS dependent at the moment
+
+		const speed = 5;
+		if(key_states['ArrowLeft'] === true) {
+			center_x -= speed;
+		}
+		if(key_states['ArrowRight'] === true) {
+			center_x += speed;
+		}
+		if(key_states['ArrowUp'] === true) {
+			center_y -= speed;
+		}
+		if(key_states['ArrowDown'] === true) {
+			center_y += speed;
+		}
+
+		center_x = clamp(center_x, 0, map.width - 100);
+		center_y = clamp(center_y, 0, map.height - 50);
+	}
+
+	function draw() {
+		const timeNow = performance.now();
+		const timeDelta = (timeNow + 1) - timePrevious;
+		timePrevious = timeNow;
+		const fps = 1000 / timeDelta;
+		fpsAverage += (fps - fpsAverage) * 0.05;
+
+		const light_state = Math.floor(timeNow / 100) % 4;
+
+		// assuming all PNG have a size of 16x16, maybe set this somewhere and check it?
+		const block_size = 16;
+
+		const t0 = performance.now();
+
+		ctxLight.globalCompositeOperation = 'source-over';
+		ctxLight.fillStyle = '#666666';
+		ctxLight.fillRect(0, 0, nodeLight.width, nodeLight.height);
+		//ctxLight.globalCompositeOperation = 'multiply';
+
+		// TODO use lighter, but darken the images and use it in one pass?
+
+		// lights
+		for(let y = 0; y < 49; y += 1) {
+			for(let x = 0; x < 93; x += 1) {
+				const block_type = pixel_rgb(map_data, x + center_x, y + center_y);
+				if(block_type === '#ffff00') {
+					const offset_x = Math.floor(light[0].width / 2);
+					const offset_y = Math.floor(light[0].height / 2);
+					ctxLight.drawImage(light[light_state], (x * block_size) - offset_x, (y * block_size) - offset_y);
+				} else if(block_type === '#ffffff') {
+					const offset_x = Math.floor(bright[0].width / 2);
+					const offset_y = Math.floor(bright[0].height / 2);
+					ctxLight.drawImage(bright[0], (x * block_size) - offset_x, (y * block_size) - offset_y);
+				}
+			}
+		}
+
+		// blocks
+		ctx.globalCompositeOperation = 'source-over';
+		for(let y = 0; y < 50; y += 1) {
+			for(let x = 0; x < 94; x += 1) {
+				const block_type = pixel_rgb(map_data, x + center_x, y + center_y);
+				if(block_type_to_image[block_type] === undefined) {
+					throw 'Unknown Block: ' + block_type;
+				} else {
+					ctx.drawImage(block_type_to_image[block_type], x * block_size, y * block_size);
+				}
+			}
+		}
+
+
+		ctx.globalCompositeOperation = 'multiply';
+		ctx.drawImage(nodeLight, 0, 0);
+
+		const t1 = performance.now();
+
+		time.innerHTML = 'Render[ms]:' + Math.floor(t1 - t0) + ' FPS:' + Math.floor(fpsAverage) + ' Position:' + center_x + '/' + center_y;
+	}
+
+
+	document.addEventListener('keydown', input);
+	document.addEventListener('keyup', input);
+
+	loop();
+}
+
+window.onload = main;
+
+</script>
+<style>
+body {
+	font-family: Ubuntu, Tahoma;
+}
+
+canvas {
+	border: 1px solid #f0f;
+}
+</style>
+</head>
+<body>
+
+<canvas id="canvas" width="1500" height="800"></canvas>
+<canvas style="display: none" id="canvas_light" width="1500" height="800"></canvas>
+
+<p id="time">-</p>
+
+</body>
+</html>
