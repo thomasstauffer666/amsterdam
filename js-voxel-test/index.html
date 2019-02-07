@@ -198,9 +198,9 @@ async function main() {
 			return map.data[offset(x, y)] === type;
 		}
 		
-		function copy(fromm, to) {
-			for(let i = 0; i < fromm.length; i += 1) {
-				to[i] = fromm[i];
+		function copy(from, to) {
+			for(let i = 0; i < from.length; i += 1) {
+				to[i] = from[i];
 			}
 		}
 
@@ -210,7 +210,7 @@ async function main() {
 			const output = arrayMake(input.data.length, 'empty');
 			for(let y = BORDER; y < (height - BORDER); y += 1) {
 				for(let x = BORDER; x < (width - BORDER); x += 1) {
-					output[offset(x, y)] = fun(input, x, y);
+					output[offset(x, y)] = fun(input, inputs, x, y);
 				}
 			}
 			return output;
@@ -219,7 +219,7 @@ async function main() {
 		// TODO try to model everything as a convolution
 
 		function fire() {
-			const dataFire = convolve(mapForeground, [], function(m, x, y) {
+			const dataFire = convolve(mapForeground, [], function(m, _, x, y) {
 				if(isType(m, x, y, 'wood')) {
 					if(isType(m, x, y - 1, 'fire') || isType(m, x, y + 1, 'fire') || isType(m, x - 1, y, 'fire') || isType(m, x + 1, y, 'fire')) {
 						return 'fire';
