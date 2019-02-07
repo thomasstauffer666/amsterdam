@@ -70,7 +70,7 @@ function imageToMap(nodeCanvas, image) {
 	};
 	for(let offset = 0; offset < size; offset += 4) {
 		const rgb = '#' + toHex(data[offset + 0]) + toHex(data[offset + 1]) + toHex(data[offset + 2]) + toHex(data[offset + 3]);
-		// TODO check here
+		// TODO check here and remove assert in mapGetBlock
 		const name = BLOCK_NAMES[rgb];
 		items.push(name);
 	}
@@ -131,6 +131,8 @@ async function main() {
 
 	const mapBackground = imageToMap(nodeCanvas, await imageLoad('map/background.PNG'));
 	const mapForeground = imageToMap(nodeCanvas, await imageLoad('map/foreground.PNG'));
+	
+	// copy water into from foreground map into water water map and remove it from foreground map
 	const mapWater = {data: mapForeground.data.map(type => type === 'water' ? 10 : 0), width: mapForeground.width, height: mapForeground.height};
 	for(let i = 0; i < mapForeground.data.length; i += 1) {
 		if(mapForeground.data[i] === 'water') {
@@ -186,15 +188,13 @@ async function main() {
 
 		const width = mapForeground.width;
 		const height = mapForeground.height;
-		const wo = mapWater.data;
-		const wn = mapWater.data.slice();
 
 		function offset(x, y) {
 			return (y * width) + x;
 		}
 
 		function isType(map, x, y, type) {
-			return map[offset(x, y)] === type;
+			return map.data[offset(x, y)] === type;
 		}
 		
 		function copy(fromm, to) {
@@ -203,13 +203,13 @@ async function main() {
 			}
 		}
 
-		function convolve(input, fun) {
+		function convolve(input, inputs, fun) {
 			const width = input.width;
 			const height = input.height;
 			const output = arrayMake(input.data.length, 'empty');
 			for(let y = BORDER; y < (height - BORDER); y += 1) {
 				for(let x = BORDER; x < (width - BORDER); x += 1) {
-					output[offset(x, y)] = fun(input.data, x, y);
+					output[offset(x, y)] = fun(input, x, y);
 				}
 			}
 			return output;
@@ -217,70 +217,77 @@ async function main() {
 
 		// TODO try to model everything as a convolution
 
-		// fire
-		const fn = convolve(mapForeground, function(fo, x, y) {
-			if(isType(fo, x, y, 'wood')) {
-				if(isType(fo, x, y - 1, 'fire') || isType(fo, x, y + 1, 'fire') || isType(fo, x - 1, y, 'fire') || isType(fo, x + 1, y, 'fire')) {
-					return 'fire';
+		function fire() {
+			const dataFire = convolve(mapForeground, [], function(m, x, y) {
+				if(isType(m, x, y, 'wood')) {
+					if(isType(m, x, y - 1, 'fire') || isType(m, x, y + 1, 'fire') || isType(m, x - 1, y, 'fire') || isType(m, x + 1, y, 'fire')) {
+						return 'fire';
+					}
 				}
-			}
-			return fo[offset(x, y)];
-		});
-		copy(fn, mapForeground.data);
+				return m.data[offset(x, y)];
+			});
+			copy(dataFire, mapForeground.data);
+		}
 
-		// water
-		for(let y = BORDER; y < (height - BORDER); y += 1) {
-			for(let x = BORDER; x < (width - BORDER); x += 1) {
-				if(wo[offset(x, y)] > 0) {
-					// down
-					if(fn[offset(x, y + 1)] === 'empty') {
-						const delta = Math.min(wn[offset(x, y)], 8);
-						assert(delta >= 0);
-						wn[offset(x, y)] -= delta;
-						wn[offset(x, y + 1)] += delta;
-					}
-					
-					// left & right
-					if((fn[offset(x - 1, y)] === 'empty') && (fn[offset(x + 1, y)] === 'empty')) {
-						const delta = Math.min(wn[offset(x, y)], 10);
-						assert(delta >= 0);
-						const delta1 = floor(delta / 2);
-						const delta2 = delta - delta1;
-						assert((delta1 + delta2) == delta);
-						wn[offset(x, y)] -= delta;
-						wn[offset(x - 1, y)] += delta1;
-						wn[offset(x + 1, y)] += delta2;
-					} else if((fn[offset(x - 1, y)] === 'empty') && (fn[offset(x + 1, y)] !== 'empty')) {
-						const delta = Math.min(wn[offset(x, y)], 10);
-						assert(delta >= 0);
-						wn[offset(x, y)] -= delta;
-						wn[offset(x - 1, y)] += delta;
-					} else if((fn[offset(x - 1, y)] !== 'empty') && (fn[offset(x + 1, y)] === 'empty')) {
-						const delta = Math.min(wn[offset(x, y)], 10);
-						assert(delta >= 0);
-						wn[offset(x, y)] -= delta;
-						wn[offset(x + 1, y)] += delta;
-					}
-					
-					// up
-					if(fn[offset(x, y - 1)] === 'empty') {
-						if(wn[offset(x, y)] > 10) {
-							const delta = wn[offset(x, y)] - 10;
+		function water() {
+			const wo = mapWater.data; // water old
+			const wn = mapWater.data.slice(); // water new
+			for(let y = BORDER; y < (height - BORDER); y += 1) {
+				for(let x = BORDER; x < (width - BORDER); x += 1) {
+					if(wo[offset(x, y)] > 0) {
+						// down
+						if(mapForeground.data[offset(x, y + 1)] === 'empty') {
+							const delta = Math.min(wn[offset(x, y)], 8);
 							assert(delta >= 0);
 							wn[offset(x, y)] -= delta;
-							wn[offset(x, y - 1)] += delta;
+							wn[offset(x, y + 1)] += delta;
 						}
+						
+						// left & right
+						if((mapForeground.data[offset(x - 1, y)] === 'empty') && (mapForeground.data[offset(x + 1, y)] === 'empty')) {
+							const delta = Math.min(wn[offset(x, y)], 10);
+							assert(delta >= 0);
+							const delta1 = floor(delta / 2);
+							const delta2 = delta - delta1;
+							assert((delta1 + delta2) == delta);
+							wn[offset(x, y)] -= delta;
+							wn[offset(x - 1, y)] += delta1;
+							wn[offset(x + 1, y)] += delta2;
+						} else if((mapForeground.data[offset(x - 1, y)] === 'empty') && (mapForeground.data[offset(x + 1, y)] !== 'empty')) {
+							const delta = Math.min(wn[offset(x, y)], 10);
+							assert(delta >= 0);
+							wn[offset(x, y)] -= delta;
+							wn[offset(x - 1, y)] += delta;
+						} else if((mapForeground.data[offset(x - 1, y)] !== 'empty') && (mapForeground.data[offset(x + 1, y)] === 'empty')) {
+							const delta = Math.min(wn[offset(x, y)], 10);
+							assert(delta >= 0);
+							wn[offset(x, y)] -= delta;
+							wn[offset(x + 1, y)] += delta;
+						}
+						
+						// up
+						if(mapForeground.data[offset(x, y - 1)] === 'empty') {
+							if(wn[offset(x, y)] > 10) {
+								const delta = wn[offset(x, y)] - 10;
+								assert(delta >= 0);
+								wn[offset(x, y)] -= delta;
+								wn[offset(x, y - 1)] += delta;
+							}
+						}
+						
 					}
-					
 				}
 			}
+			let sum = 0;
+			for(let i = 0; i < wo.length; i += 1) {
+				wo[i] = wn[i];
+				sum += wn[i];
+			}
+			//debug(sum); // sum of all pressures must be the same as long as there is no water flowing into/out of the system
 		}
-		let sum = 0;
-		for(let i = 0; i < wo.length; i += 1) {
-			wo[i] = wn[i];
-			sum += wn[i];
-		}
-		//debug(sum); // sum of all pressures must be the same as long as there is no water flowing into/out of the system
+		
+		fire();
+		water();
 	}
 
 	function draw(timeDelta) {
@@ -393,8 +400,6 @@ p.hint {
 	<p class="hint">Warning: This release does not contain the Relavistic-Engineer</p>
 	<button id="physics">Physics Step</button>
 </div>
-
-<!--<p id="debug">-</p>-->
 
 </body>
 </html>
