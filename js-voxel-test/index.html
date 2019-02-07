@@ -1,0 +1,400 @@
+<html>
+<head>
+<meta charset="utf-8"/>
+<title>js-voxel-test</title>
+<script>
+
+'use strict';
+
+function arrayMake(size, value) {
+	return new Array(size).fill(value);
+}
+
+function clamp(value, value_min, value_max) {
+	if(value < value_min) {
+		return value_min;
+	} else if(value > value_max) {
+		return value_max;
+	}
+	return value;
+}
+
+function floor(value) {
+	return Math.floor(value);
+}
+
+function debug() {
+	console.log([...arguments]);
+}
+
+function assert(condition) {
+	if(condition !== true) {
+		console.trace();
+		throw 'Assert';
+	}
+}
+
+function sleep(ms) {
+	return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function imageLoad(fileName) {
+	return new Promise((resolve, reject) => {
+		const image = new Image();
+		image.onload = () => resolve(image);
+		image.src = fileName;
+	});
+}
+
+function imageToMap(nodeCanvas, image) {
+	const ctx = nodeCanvas.getContext('2d');
+	nodeCanvas.width = image.width;
+	nodeCanvas.height = image.height;
+	ctx.drawImage(image, 0, 0, image.width, image.height);
+	const data = ctx.getImageData(0, 0, image.width, image.height).data;
+	const size = image.width * image.height * 4;
+	let items = [];
+	function toHex(number) {
+		return ('0' + number.toString(16)).substr(-2);
+	}
+	const BLOCK_NAMES = {
+		'#00000000': 'empty',
+		'#00aaffff': 'air',
+		'#999999ff': 'wall',
+		'#666666ff': 'steel',
+		'#ffaa00ff': 'fire',
+		'#0000ffff': 'water',
+		'#00ff00ff': 'gas',
+		'#aa6600ff': 'wood',
+		'#663300ff': 'dirt',
+	};
+	for(let offset = 0; offset < size; offset += 4) {
+		const rgb = '#' + toHex(data[offset + 0]) + toHex(data[offset + 1]) + toHex(data[offset + 2]) + toHex(data[offset + 3]);
+		// TODO check here
+		const name = BLOCK_NAMES[rgb];
+		items.push(name);
+	}
+	return {
+		width: image.width,
+		height: image.height,
+		data: items,
+	};
+}
+
+async function main() {
+	const BLOCKS = {
+		'empty': {
+			image: undefined,
+			canBurn: false,
+		},
+		'air': {
+			image: await imageLoad('air.png'),
+			canBurn: false,
+		},
+		'wall': {
+			image: await imageLoad('wall.png'),
+			canBurn: false,
+		},
+		'steel': {
+			image: await imageLoad('steel.png'),
+			canBurn: false,
+		},
+		'fire': {
+			image: await imageLoad('fire.png'),
+			canBurn: false,
+		},
+		'water': {
+			image: await imageLoad('water.png'),
+			canBurn: false,
+		},
+		'gas': {
+			image: await imageLoad('gas.png'),
+			canBurn: false,
+		},
+		'wood': {
+			image: await imageLoad('wood.png'),
+			canBurn: true,
+		},
+		'dirt': {
+			image: await imageLoad('dirt.png'),
+			canBurn: true,
+		},
+	};
+
+
+	const BLOCK_SIZE = 16;
+
+	const nodeCanvas = document.getElementById('canvas');
+	const ctx = nodeCanvas.getContext('2d');
+	ctx.imageSmoothingEnabled = false;
+	const nodeDebugRender = document.getElementById('debug-render');
+
+	const mapBackground = imageToMap(nodeCanvas, await imageLoad('map/background.PNG'));
+	const mapForeground = imageToMap(nodeCanvas, await imageLoad('map/foreground.PNG'));
+	const mapWater = {data: mapForeground.data.map(type => type === 'water' ? 10 : 0), width: mapForeground.width, height: mapForeground.height};
+	for(let i = 0; i < mapForeground.data.length; i += 1) {
+		if(mapForeground.data[i] === 'water') {
+			mapForeground.data[i] = 'empty';
+		}
+	}
+
+	let playerX = 0.0;
+	let playerY = 0.0;
+	let timePrevious = performance.now();
+	let fpsAverage = 0.0;
+	let keyStates = {'ArrowLeft': false, 'ArrowRight': false, 'ArrowUp': false, 'ArrowDown': false};
+
+	function input(event) {
+		if((event.type === 'keydown') && (event.key === 'Enter')) {
+			//
+		} else if((event.type === 'keydown')) {
+			keyStates[event.key] = true;
+		} else if((event.type === 'keyup')) {
+			keyStates[event.key] = false;
+		}
+	}
+
+	function loop() {
+		const timeNow = performance.now();
+		const timeDelta = (timeNow + 1) - timePrevious;
+		timePrevious = timeNow;
+		move(timeDelta);
+		physics();
+		draw(timeDelta);
+		window.requestAnimationFrame(loop);
+	}
+
+	function move(timeDelta) {
+		const speed = 0.0; // TODO use timeDelta
+
+		if(keyStates['ArrowLeft'] === true) {
+			playerX -= speed;
+		}
+		if(keyStates['ArrowRight'] === true) {
+			playerX += speed;
+		}
+		if(keyStates['ArrowUp'] === true) {
+			playerY -= speed;
+		}
+		if(keyStates['ArrowDown'] === true) {
+			playerY += speed;
+		}
+	}
+
+	function physics() {
+		const BORDER = 1; // max distance where to lookup for neighbouring cells
+
+		const width = mapForeground.width;
+		const height = mapForeground.height;
+		const wo = mapWater.data;
+		const wn = mapWater.data.slice();
+
+		function offset(x, y) {
+			return (y * width) + x;
+		}
+
+		function isType(map, x, y, type) {
+			return map[offset(x, y)] === type;
+		}
+		
+		function copy(fromm, to) {
+			for(let i = 0; i < fromm.length; i += 1) {
+				to[i] = fromm[i];
+			}
+		}
+
+		function convolve(input, fun) {
+			const width = input.width;
+			const height = input.height;
+			const output = arrayMake(input.data.length, 'empty');
+			for(let y = BORDER; y < (height - BORDER); y += 1) {
+				for(let x = BORDER; x < (width - BORDER); x += 1) {
+					output[offset(x, y)] = fun(input.data, x, y);
+				}
+			}
+			return output;
+		}
+
+		// TODO try to model everything as a convolution
+
+		// fire
+		const fn = convolve(mapForeground, function(fo, x, y) {
+			if(isType(fo, x, y, 'wood')) {
+				if(isType(fo, x, y - 1, 'fire') || isType(fo, x, y + 1, 'fire') || isType(fo, x - 1, y, 'fire') || isType(fo, x + 1, y, 'fire')) {
+					return 'fire';
+				}
+			}
+			return fo[offset(x, y)];
+		});
+		copy(fn, mapForeground.data);
+
+		// water
+		for(let y = BORDER; y < (height - BORDER); y += 1) {
+			for(let x = BORDER; x < (width - BORDER); x += 1) {
+				if(wo[offset(x, y)] > 0) {
+					// down
+					if(fn[offset(x, y + 1)] === 'empty') {
+						const delta = Math.min(wn[offset(x, y)], 8);
+						assert(delta >= 0);
+						wn[offset(x, y)] -= delta;
+						wn[offset(x, y + 1)] += delta;
+					}
+					
+					// left & right
+					if((fn[offset(x - 1, y)] === 'empty') && (fn[offset(x + 1, y)] === 'empty')) {
+						const delta = Math.min(wn[offset(x, y)], 10);
+						assert(delta >= 0);
+						const delta1 = floor(delta / 2);
+						const delta2 = delta - delta1;
+						assert((delta1 + delta2) == delta);
+						wn[offset(x, y)] -= delta;
+						wn[offset(x - 1, y)] += delta1;
+						wn[offset(x + 1, y)] += delta2;
+					} else if((fn[offset(x - 1, y)] === 'empty') && (fn[offset(x + 1, y)] !== 'empty')) {
+						const delta = Math.min(wn[offset(x, y)], 10);
+						assert(delta >= 0);
+						wn[offset(x, y)] -= delta;
+						wn[offset(x - 1, y)] += delta;
+					} else if((fn[offset(x - 1, y)] !== 'empty') && (fn[offset(x + 1, y)] === 'empty')) {
+						const delta = Math.min(wn[offset(x, y)], 10);
+						assert(delta >= 0);
+						wn[offset(x, y)] -= delta;
+						wn[offset(x + 1, y)] += delta;
+					}
+					
+					// up
+					if(fn[offset(x, y - 1)] === 'empty') {
+						if(wn[offset(x, y)] > 10) {
+							const delta = wn[offset(x, y)] - 10;
+							assert(delta >= 0);
+							wn[offset(x, y)] -= delta;
+							wn[offset(x, y - 1)] += delta;
+						}
+					}
+					
+				}
+			}
+		}
+		let sum = 0;
+		for(let i = 0; i < wo.length; i += 1) {
+			wo[i] = wn[i];
+			sum += wn[i];
+		}
+		//debug(sum); // sum of all pressures must be the same as long as there is no water flowing into/out of the system
+	}
+
+	function draw(timeDelta) {
+		const fps = 1000 / timeDelta;
+		fpsAverage += (fps - fpsAverage) * 0.05;
+
+		const canvasWidth = canvas.width;
+		const canvasHeight = canvas.height;
+		const mapBlocksX = floor(mapBackground.width);
+		const mapBlocksY = floor(mapBackground.height);
+
+		const t0 = performance.now();
+
+		function mapGet(map, x, y) {
+			return map.data[(y * map.width) + x];
+		}
+
+		function mapGetBlock(map, x, y) {
+			const blockType = mapGet(map, x, y);
+			assert(BLOCKS[blockType] !== undefined);
+			return BLOCKS[blockType];
+		}
+
+		// background
+		for(let y = 0; y < mapBlocksY; y += 1) {
+			for(let x = 0; x < mapBlocksX; x += 1) {
+				const block = mapGetBlock(mapBackground, x, y);
+				ctx.drawImage(block.image, x * BLOCK_SIZE, y * BLOCK_SIZE);
+			}
+		}
+
+		// foreground
+		for(let y = 0; y < mapBlocksY; y += 1) {
+			for(let x = 0; x < mapBlocksX; x += 1) {
+				const block = mapGetBlock(mapForeground, x, y);
+				if(block.image !== undefined) {
+					ctx.drawImage(block.image, x * BLOCK_SIZE, y * BLOCK_SIZE);
+				}
+			}
+		}
+
+		// water
+		for(let y = 0; y < mapBlocksY; y += 1) {
+			for(let x = 0; x < mapBlocksX; x += 1) {
+				if(mapGet(mapWater, x, y) > 0) {
+					ctx.drawImage(BLOCKS['water'].image, x * BLOCK_SIZE, y * BLOCK_SIZE);
+				}
+			}
+		}
+
+		const t1 = performance.now();
+
+		nodeDebugRender.innerHTML = 'Render[ms]:' + floor(t1 - t0) + ' FPS:' + floor(fpsAverage) + ' Position:' + playerX + '/' + playerY;
+	}
+
+	function resize() {
+		// TODO fill full window and set CSS accordingly
+		canvas.width = window.innerWidth * 0.95;
+		canvas.height = window.innerHeight * 0.95;
+	}
+
+	document.addEventListener('keydown', input);
+	document.addEventListener('keyup', input);
+	window.addEventListener('resize', resize, false);
+
+	document.getElementById('physics').addEventListener('click', physics);
+
+	resize();
+	loop();
+}
+
+window.onload = main;
+
+</script>
+<style>
+body {
+	font-family: Ubuntu, Tahoma;
+	margin: 0px;
+	padding: 0px;
+}
+
+#debug {
+	position: fixed;
+	width: 25%;
+	right: 10px;
+	top: 10px;
+	border-radius: 5px;
+	border: 1px solid #f99;
+	padding: 3px;
+	background-color: #fee;
+	opacity: 0.9;
+}
+
+canvas {
+	border: 1px solid #f0f;
+}
+
+p.hint {
+	font-size: 0.8em;
+}
+</style>
+</head>
+<body>
+
+<canvas id="canvas" width="300" height="300"></canvas>
+
+<div id="debug">
+	<h3>Amsterdam</h3>
+	<div id="debug-render"></div>
+	<p class="hint">Warning: This release does not contain the Relavistic-Engineer</p>
+	<button id="physics">Physics Step</button>
+</div>
+
+<!--<p id="debug">-</p>-->
+
+</body>
+</html>
