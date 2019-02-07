@@ -127,6 +127,7 @@ async function main() {
 	const nodeCanvas = document.getElementById('canvas');
 	const ctx = nodeCanvas.getContext('2d');
 	ctx.imageSmoothingEnabled = false;
+	ctx.font = '10px Ubuntu';
 	const nodeDebugRender = document.getElementById('debug-render');
 
 	const mapBackground = imageToMap(nodeCanvas, await imageLoad('map/background.PNG'));
@@ -332,8 +333,10 @@ async function main() {
 		// water
 		for(let y = 0; y < mapBlocksY; y += 1) {
 			for(let x = 0; x < mapBlocksX; x += 1) {
-				if(mapGet(mapWater, x, y) > 0) {
+				const water = mapGet(mapWater, x, y);
+				if(water > 0) {
 					ctx.drawImage(BLOCKS['water'].image, x * BLOCK_SIZE, y * BLOCK_SIZE);
+					ctx.fillText(water, x * BLOCK_SIZE, ((y + 1) * BLOCK_SIZE) - 1); 
 				}
 			}
 		}
