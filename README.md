@@ -1,8 +1,6 @@
 
 # Amsterdam
 
-[Prototypes](https://thomasstauffer666.github.io/amsterdam/index.html)
-
 [js-voxel-test](https://thomasstauffer666.github.io/amsterdam/js-voxel-test/index.html)
 
 [js-canvas-test](https://thomasstauffer666.github.io/amsterdam/js-canvas-test/index.html)
