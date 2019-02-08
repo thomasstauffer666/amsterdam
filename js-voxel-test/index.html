@@ -88,41 +88,41 @@ async function main() {
 			canBurn: false,
 		},
 		'air': {
-			image: await imageLoad('air.png'),
+			image: await imageLoad('air2.png'),
 			canBurn: false,
 		},
 		'wall': {
-			image: await imageLoad('wall.png'),
+			image: await imageLoad('wall2.png'),
 			canBurn: false,
 		},
 		'steel': {
-			image: await imageLoad('steel.png'),
+			image: await imageLoad('steel2.png'),
 			canBurn: false,
 		},
 		'fire': {
-			image: await imageLoad('fire.png'),
+			image: await imageLoad('fire2.png'),
 			canBurn: false,
 		},
 		'water': {
-			image: await imageLoad('water.png'),
+			image: await imageLoad('water2.png'),
 			canBurn: false,
 		},
 		'gas': {
-			image: await imageLoad('gas.png'),
+			image: await imageLoad('gas2.png'),
 			canBurn: false,
 		},
 		'wood': {
-			image: await imageLoad('wood.png'),
+			image: await imageLoad('wood2.png'),
 			canBurn: true,
 		},
 		'dirt': {
-			image: await imageLoad('dirt.png'),
+			image: await imageLoad('dirt2.png'),
 			canBurn: true,
 		},
 	};
 
 
-	const BLOCK_SIZE = 16;
+	const BLOCK_SIZE = 8;
 
 	const nodeCanvas = document.getElementById('canvas');
 	const ctx = nodeCanvas.getContext('2d');
@@ -131,9 +131,9 @@ async function main() {
 	const nodeDebugRender = document.getElementById('debug-render');
 	const nodeDebugPhysics = document.getElementById('debug-physics');
 
+	const mapBackground = imageToMap(nodeCanvas, await imageLoad('map2/background.PNG'));
+	const mapForeground = imageToMap(nodeCanvas, await imageLoad('map2/foreground.PNG'));
 
-	const mapBackground = imageToMap(nodeCanvas, await imageLoad('map/background.PNG'));
-	const mapForeground = imageToMap(nodeCanvas, await imageLoad('map/foreground.PNG'));
 	// copy water into from foreground map into water water map and remove it from foreground map
 	const mapWater = {data: mapForeground.data.map(type => type === 'water' ? 10 : 0), width: mapForeground.width, height: mapForeground.height};
 	for(let i = 0; i < mapForeground.data.length; i += 1) {
