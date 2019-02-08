@@ -129,10 +129,11 @@ async function main() {
 	ctx.imageSmoothingEnabled = false;
 	ctx.font = '10px Ubuntu';
 	const nodeDebugRender = document.getElementById('debug-render');
+	const nodeDebugPhysics = document.getElementById('debug-physics');
+
 
 	const mapBackground = imageToMap(nodeCanvas, await imageLoad('map/background.PNG'));
 	const mapForeground = imageToMap(nodeCanvas, await imageLoad('map/foreground.PNG'));
-	
 	// copy water into from foreground map into water water map and remove it from foreground map
 	const mapWater = {data: mapForeground.data.map(type => type === 'water' ? 10 : 0), width: mapForeground.width, height: mapForeground.height};
 	for(let i = 0; i < mapForeground.data.length; i += 1) {
@@ -197,7 +198,7 @@ async function main() {
 		function isType(map, x, y, type) {
 			return map.data[offset(x, y)] === type;
 		}
-		
+
 		function copy(from, to) {
 			for(let i = 0; i < from.length; i += 1) {
 				to[i] = from[i];
@@ -235,7 +236,67 @@ async function main() {
 			const wn = mapWater.data.slice(); // water new
 			for(let y = BORDER; y < (height - BORDER); y += 1) {
 				for(let x = BORDER; x < (width - BORDER); x += 1) {
-					if(wo[offset(x, y)] > 0) {
+					const level = wo[offset(x, y)]; // level
+					if(level > 0) {
+						let lc = level;
+						const lt = wo[offset(x, y - 1)];
+						const lb = wo[offset(x, y + 1)];
+
+						const fl = mapForeground.data[offset(x - 1, y)];
+						const fr = mapForeground.data[offset(x + 1, y)];
+						const fb = mapForeground.data[offset(x, y + 1)];
+						const ft = mapForeground.data[offset(x, y - 1)];
+
+						let dc = 0;
+						let dl = 0;
+						let dr = 0;
+						let dt = 0;
+						let db = 0;
+
+						// down
+						if(fb === 'empty') {
+							const d = Math.ceil(lc * 0.9);
+							dc -= d;
+							db += d;
+							//assert(lc >= 0);
+
+						}
+						lc = level + dc;
+						
+						if((fl === 'empty') && (fr === 'empty')) {
+							let d = Math.ceil(lc * 0.95);
+							//if((d % 2) == 0) {
+							//	d += 1;
+							//}
+							const d1 = floor(d / 2);
+							const d2 = d - d1;
+							dc -= d;
+							dl += d1;
+							dr += d2;
+						} else if(fl === 'empty') {
+							const d = Math.ceil(lc * 0.95);
+							dc -= d;
+							dl += d;
+						} else if(fr === 'empty') {
+							const d = Math.ceil(lc * 0.95);
+							dc -= d;
+							dr += d;
+						}
+						lc = level + dc;
+
+						if(ft === 'empty') {
+							const d = Math.ceil(lc * 0.9);
+							dc -= d;
+							dt += d;
+						}
+
+						wn[offset(x, y)] += dc;
+						wn[offset(x - 1, y)] += dl;
+						wn[offset(x + 1, y)] += dr;
+						wn[offset(x, y - 1)] += dt;
+						wn[offset(x, y + 1)] += db;
+
+						/*
 						// down
 						if(mapForeground.data[offset(x, y + 1)] === 'empty') {
 							const delta = Math.min(wn[offset(x, y)], 8);
@@ -243,7 +304,7 @@ async function main() {
 							wn[offset(x, y)] -= delta;
 							wn[offset(x, y + 1)] += delta;
 						}
-						
+
 						// left & right
 						if((mapForeground.data[offset(x - 1, y)] === 'empty') && (mapForeground.data[offset(x + 1, y)] === 'empty')) {
 							const delta = Math.min(wn[offset(x, y)], 10);
@@ -265,7 +326,7 @@ async function main() {
 							wn[offset(x, y)] -= delta;
 							wn[offset(x + 1, y)] += delta;
 						}
-						
+
 						// up
 						if(mapForeground.data[offset(x, y - 1)] === 'empty') {
 							if(wn[offset(x, y)] > 10) {
@@ -275,7 +336,8 @@ async function main() {
 								wn[offset(x, y - 1)] += delta;
 							}
 						}
-						
+						*/
+
 					}
 				}
 			}
@@ -286,9 +348,18 @@ async function main() {
 			}
 			//debug(sum); // sum of all pressures must be the same as long as there is no water flowing into/out of the system
 		}
-		
+
+		const t0 = performance.now();
+
+
+		//for(let i = 0; i < 10; i += 1) {
 		fire();
 		water();
+		//}
+		
+		const t1 = performance.now();
+
+		nodeDebugPhysics.innerHTML = 'Physics[ms]:' + floor(t1 - t0);
 	}
 
 	function draw(timeDelta) {
@@ -333,10 +404,10 @@ async function main() {
 		// water
 		for(let y = 0; y < mapBlocksY; y += 1) {
 			for(let x = 0; x < mapBlocksX; x += 1) {
-				const water = mapGet(mapWater, x, y);
-				if(water > 0) {
+				const level = mapGet(mapWater, x, y);
+				if(level > 0) {
 					ctx.drawImage(BLOCKS['water'].image, x * BLOCK_SIZE, y * BLOCK_SIZE);
-					ctx.fillText(water, x * BLOCK_SIZE, ((y + 1) * BLOCK_SIZE) - 1); 
+					ctx.fillText(level, x * BLOCK_SIZE, ((y + 1) * BLOCK_SIZE) - 1);
 				}
 			}
 		}
@@ -400,6 +471,7 @@ p.hint {
 <div id="debug">
 	<h3>Amsterdam</h3>
 	<div id="debug-render"></div>
+	<div id="debug-physics"></div>
 	<p class="hint">Warning: This release does not contain the Relavistic-Engineer</p>
 	<button id="physics">Physics Step</button>
 </div>
