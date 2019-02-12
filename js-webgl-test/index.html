@@ -1,0 +1,317 @@
+<html>
+<head>
+<meta charset="utf-8"/>
+<title>js-webgl-test</title>
+<script>
+
+'use strict';
+
+const vsCode = `
+precision highp float;
+
+uniform mat4 uOrtho;
+
+attribute vec2 aPosition;
+attribute vec4 aColor;
+attribute vec2 aTex;
+
+varying vec4 vColor;
+varying vec2 vTex;
+
+void main() {
+	gl_Position = vec4(aPosition, 0.0, 1.0) * uOrtho;
+	vColor = aColor;
+	vTex = aTex;
+}
+`
+
+const fsCode = `
+precision highp float;
+
+varying vec4 vColor;
+varying vec2 vTex;
+
+uniform sampler2D uTex;
+
+void main() {
+	//gl_FragColor = vec4(1.0, 0.0, 1.0, 1.0);
+	//gl_FragColor = vColor;
+	gl_FragColor = texture2D(uTex, vTex) * vColor;
+}
+`
+
+function imageLoad(fileName) {
+	return new Promise((resolve, reject) => {
+		const image = new Image();
+		image.onload = () => resolve(image);
+		image.src = fileName;
+	});
+}
+
+function getScript(id) {
+	const node = document.getElementById(id);
+	return node.textContent;
+}
+
+function makeShader(gl, type, code) {
+	const shader = gl.createShader(type);
+	gl.shaderSource(shader, code);
+	gl.compileShader(shader);
+
+	if(!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+		throw gl.getShaderInfoLog(shader);
+	}
+
+	return shader;
+}
+
+function makeProgram(gl, vsCode, fsCode) {
+	const program = gl.createProgram();
+
+	const shaderVertex = makeShader(gl, gl.VERTEX_SHADER, vsCode);
+	const shaderFragment = makeShader(gl, gl.FRAGMENT_SHADER, fsCode);
+
+	gl.attachShader(program, shaderVertex);
+	gl.attachShader(program, shaderFragment);
+	gl.linkProgram(program);
+
+	if(!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+		throw gl.getProgramInfoLog(program);
+	}
+
+	return program;
+}
+
+function makeTexture(gl, image) {
+	gl.enable(gl.TEXTURE_2D);
+	const texture = gl.createTexture();
+
+	gl.bindTexture(gl.TEXTURE_2D, texture);
+	gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST); // LINEAR
+	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+
+	return texture;
+}
+
+function ortho(left, right, bottom, top) {
+	// https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glOrtho.xml
+
+	const far = 1;
+	const near = -1;
+
+	const sx = 2 / (right - left);
+	const sy = 2 / (top - bottom);
+	const sz = -2 / (far - near);
+
+	const tx = -((right + left) / (right - left));
+	const ty = -((top + bottom) / (top - bottom));
+	const tz = -((far + near) / (far - near));
+
+	const matrix = new Float32Array([
+		sx, 0.0, 0.0, tx,
+		0.0, sy, 0.0, ty,
+		0.0, 0.0, sz, tz,
+		0.0, 0.0, 0.0, 1.0,
+	]);
+
+	return matrix;
+}
+
+async function main() {
+	const image = await imageLoad('image.png');
+	console.log(image);
+
+	const nodeDebugFPS = document.getElementById('debug-fps');
+
+	const nodeCanvas = document.getElementById('canvas');
+	canvas.width = 800;
+	canvas.height = 600;
+	const gl = canvas.getContext('webgl');
+	console.log(gl);
+
+	/*
+	const positionArray = new Float32Array([
+		-0.5, 0.5,
+		0.5, 0.5,
+		0.5, -0.5,
+		-0.5, 0.5,
+		0.5, -0.5,
+		-0.5, -0.5,
+	]);
+	*/
+	/*
+	const positionArray = new Float32Array([
+		100.0, 400.0,
+		400.0, 400.0,
+		400.0, 100.0,
+		100.0, 400.0,
+		400.0, 100.0,
+		100.0, 100.0,
+	]);
+	*/
+	/*
+	const colorArray = new Float32Array([
+		1.0, 0.0, 0.0, 1.0, // Red
+		0.0, 1.0, 0.0, 1.0, // Green
+		0.0, 0.0, 1.0, 1.0, // Blue
+		1.0, 0.0, 0.0, 1.0, // Red
+		0.0, 0.0, 1.0, 1.0, // Blue
+		1.0, 1.0, 1.0, 1.0, // White
+	]);
+	*/
+	/*
+	const colorArray = new Float32Array([
+		1.0, 1.0, 1.0, 1.0,
+		1.0, 1.0, 1.0, 1.0,
+		1.0, 1.0, 1.0, 1.0,
+		1.0, 1.0, 1.0, 1.0,
+		1.0, 1.0, 1.0, 1.0,
+		1.0, 1.0, 1.0, 1.0,
+	]);
+	*/
+	/*
+	const texArray = new Float32Array([
+		0.0, 1.0,
+		1.0, 1.0,
+		1.0, 0.0,
+		0.0, 1.0,
+		1.0, 0.0,
+		0.0, 0.0,
+	]);
+	*/
+
+	let positionA = [];
+	let colorA = [];
+	let texA = [];
+
+	for(let z = 0; z < 10; z += 1) {
+		for(let y = 0; y < 30; y += 1) {
+			for(let x = 0; x < 40; x += 1) {
+				const size = 16;
+				const x1 = (x + 1) * size;
+				const y1 = (y + 1) * size;
+				const x2 = x1 + size;
+				const y2 = y1 + size;
+
+				const positionPart = [
+					x1, y2,
+					x2, y2,
+					x2, y1,
+					x1, y2,
+					x2, y1,
+					x1, y1,
+				];
+				const colorPart = [
+					1.0, 1.0, 1.0, 1.0,
+					1.0, 1.0, 1.0, 1.0,
+					1.0, 1.0, 1.0, 1.0,
+					1.0, 1.0, 1.0, 1.0,
+					1.0, 1.0, 1.0, 1.0,
+					1.0, 1.0, 1.0, 1.0,
+				];
+				const texPart = [
+					0.0, 1.0,
+					1.0, 1.0,
+					1.0, 0.0,
+					0.0, 1.0,
+					1.0, 0.0,
+					0.0, 0.0,
+				];
+
+				positionA.push(...positionPart);
+				colorA.push(...colorPart);
+				texA.push(...texPart);
+			}
+		}
+	}
+
+	const positionArray = new Float32Array(positionA);
+	const colorArray = new Float32Array(colorA);
+	const texArray = new Float32Array(texA);
+
+	const program = makeProgram(gl, vsCode, fsCode);
+
+	const tex = makeTexture(gl, image);
+
+	const positionComponents = 2;
+	const positionBuffer = gl.createBuffer();
+	gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+	gl.bufferData(gl.ARRAY_BUFFER, positionArray, gl.STATIC_DRAW);
+
+	const colorBuffer = gl.createBuffer();
+	gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
+	gl.bufferData(gl.ARRAY_BUFFER, colorArray, gl.STATIC_DRAW);
+
+	const texBuffer = gl.createBuffer();
+	gl.bindBuffer(gl.ARRAY_BUFFER, texBuffer);
+	gl.bufferData(gl.ARRAY_BUFFER, texArray, gl.STATIC_DRAW);
+
+	const vertexCount = positionArray.length / positionComponents;
+
+	const matrixOrtho = ortho(0, canvas.width, canvas.height, 0);
+	
+	console.log(vertexCount);
+
+	function draw() {
+		const t0 = performance.now();
+
+		gl.viewport(0, 0, canvas.width, canvas.height);
+		gl.clearColor(1.0, 0.9, 1.0, 1.0);
+		gl.clear(gl.COLOR_BUFFER_BIT);
+
+		gl.useProgram(program);
+
+		const uTex = gl.getUniformLocation(program, 'uTex');
+		gl.uniform1i(uTex, 0);
+
+		const uOrtho = gl.getUniformLocation(program, 'uOrtho');
+		gl.uniformMatrix4fv(uOrtho, false, matrixOrtho);
+
+		const aPosition = gl.getAttribLocation(program, 'aPosition');
+		gl.enableVertexAttribArray(aPosition);
+		gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+		gl.vertexAttribPointer(aPosition, positionComponents, gl.FLOAT, false, 0, 0);
+
+		const aColor = gl.getAttribLocation(program, 'aColor');
+		gl.enableVertexAttribArray(aColor);
+		gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
+		gl.vertexAttribPointer(aColor, 4, gl.FLOAT, false, 0, 0);
+
+		const aTex = gl.getAttribLocation(program, 'aTex');
+		gl.enableVertexAttribArray(aTex);
+		gl.bindBuffer(gl.ARRAY_BUFFER, texBuffer);
+		gl.vertexAttribPointer(aTex, 2, gl.FLOAT, false, 0, 0);
+
+		gl.drawArrays(gl.TRIANGLES, 0, vertexCount);
+
+		const t1 = performance.now();
+
+		nodeDebugFPS.innerHTML = (t1 - t0);
+
+		window.requestAnimationFrame(draw);
+	}
+
+	draw();
+}
+
+window.onload = main;
+
+</script>
+<style>
+body {
+	font-family: Ubuntu;
+}
+
+canvas {
+	border: 1px solid #f0f;
+}
+</style>
+</head>
+<body>
+<canvas id="canvas"></canvas>
+<div id="debug"><p id="debug-fps"></p></div>
+</body>
+</html>
