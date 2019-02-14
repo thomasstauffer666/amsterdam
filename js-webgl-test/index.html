@@ -83,7 +83,7 @@ function makeProgram(gl, vsCode, fsCode) {
 }
 
 function makeTexture(gl, image) {
-	gl.enable(gl.TEXTURE_2D);
+	//gl.enable(gl.TEXTURE_2D);
 	const texture = gl.createTexture();
 
 	gl.bindTexture(gl.TEXTURE_2D, texture);
@@ -94,6 +94,41 @@ function makeTexture(gl, image) {
 	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 
 	return texture;
+}
+
+function imageToMap(nodeCanvas, image) {
+	const ctx = nodeCanvas.getContext('2d');
+	nodeCanvas.width = image.width;
+	nodeCanvas.height = image.height;
+	ctx.drawImage(image, 0, 0, image.width, image.height);
+	const data = ctx.getImageData(0, 0, image.width, image.height).data;
+	const size = image.width * image.height * 4;
+	let items = [];
+	function toHex(number) {
+		return ('0' + number.toString(16)).substr(-2);
+	}
+	const BLOCK_NAMES = {
+		'#00000000': 'empty',
+		'#00aaffff': 'air',
+		'#999999ff': 'wall',
+		'#666666ff': 'steel',
+		'#ffaa00ff': 'fire',
+		'#0000ffff': 'water',
+		'#00ff00ff': 'gas',
+		'#aa6600ff': 'wood',
+		'#663300ff': 'dirt',
+	};
+	for(let offset = 0; offset < size; offset += 4) {
+		const rgb = '#' + toHex(data[offset + 0]) + toHex(data[offset + 1]) + toHex(data[offset + 2]) + toHex(data[offset + 3]);
+		// TODO check here and remove assert in mapGetBlock
+		const name = BLOCK_NAMES[rgb];
+		items.push(name);
+	}
+	return {
+		width: image.width,
+		height: image.height,
+		data: items,
+	};
 }
 
 function ortho(left, right, bottom, top) {
@@ -121,16 +156,61 @@ function ortho(left, right, bottom, top) {
 }
 
 async function main() {
-	const image = await imageLoad('image.png');
+	const image = await imageLoad('texture.png');
 	console.log(image);
 
 	const nodeDebugFPS = document.getElementById('debug-fps');
 
 	const nodeCanvas = document.getElementById('canvas');
-	canvas.width = 800;
-	canvas.height = 600;
+	const nodeCanvasMap = document.getElementById('canvas-map');
+
+	const mapBackground = imageToMap(nodeCanvasMap, await imageLoad('map/background.PNG'));
+	const mapForeground = imageToMap(nodeCanvasMap, await imageLoad('map/foreground.PNG'));
+
+	canvas.width = 1500;
+	canvas.height = 800;
+
 	const gl = canvas.getContext('webgl');
 	console.log(gl);
+	
+	const BLOCKS = {
+		'empty': {
+			coords: [0, 8],
+			canBurn: false,
+		},
+		'air': {
+			coords: [0, 0],
+			canBurn: false,
+		},
+		'wall': {
+			coords: [40, 0],
+			canBurn: false,
+		},
+		'steel': {
+			coords: [32, 0],
+			canBurn: false,
+		},
+		'fire': {
+			coords: [16, 0],
+			canBurn: false,
+		},
+		'water': {
+			coords: [56, 0],
+			canBurn: false,
+		},
+		'gas': {
+			coords: [24, 0],
+			canBurn: false,
+		},
+		'wood': {
+			coords: [48, 0],
+			canBurn: true,
+		},
+		'dirt': {
+			coords: [8, 0],
+			canBurn: true,
+		},
+	};	
 
 	/*
 	const positionArray = new Float32Array([
@@ -186,13 +266,17 @@ async function main() {
 	let positionA = [];
 	let colorA = [];
 	let texA = [];
+	
+	const maps = [mapBackground, mapForeground];
 
-	for(let z = 0; z < 100; z += 1) {
-		for(let y = 0; y < 30; y += 1) {
-			for(let x = 0; x < 40; x += 1) {
-				const size = 16;
-				const x1 = (x + 1) * size;
-				const y1 = (y + 1) * size;
+	for(let z = 0; z < 2; z += 1) {
+		const map = maps[z];
+		
+		for(let y = 0; y < mapForeground.height; y += 1) {
+			for(let x = 0; x < mapForeground.width; x += 1) {
+				const size = 8;
+				const x1 = x * size;
+				const y1 = y * size;
 				const x2 = x1 + size;
 				const y2 = y1 + size;
 
@@ -212,13 +296,23 @@ async function main() {
 					1.0, 1.0, 1.0, 1.0,
 					1.0, 1.0, 1.0, 1.0,
 				];
+				
+				const coords = BLOCKS[map.data[y * map.width + x]].coords;
+				const texel = 1 / 8;
+				
+				// TODO use centre of pixel?
+				const u1 = coords[0] / 64;
+				const v1 = coords[1] / 64;
+				const u2 = u1 + texel;
+				const v2 = v1 + texel;
+				
 				const texPart = [
-					0.0, 1.0,
-					1.0, 1.0,
-					1.0, 0.0,
-					0.0, 1.0,
-					1.0, 0.0,
-					0.0, 0.0,
+					u1, v2,
+					u2, v2,
+					u2, v1,
+					u1, v2,
+					u2, v1,
+					u1, v1,
 				];
 
 				positionA.push(...positionPart);
@@ -261,6 +355,8 @@ async function main() {
 		gl.viewport(0, 0, canvas.width, canvas.height);
 		gl.clearColor(1.0, 0.9, 1.0, 1.0);
 		gl.clear(gl.COLOR_BUFFER_BIT);
+		gl.enable(gl.BLEND);
+		gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
 
 		gl.useProgram(program);
 
@@ -308,10 +404,16 @@ body {
 canvas {
 	border: 1px solid #f0f;
 }
+
+#canvas-map {
+	display: none;
+}
+
 </style>
 </head>
 <body>
 <canvas id="canvas"></canvas>
+<canvas id="canvas-map"></canvas>
 <div id="debug"><p id="debug-fps"></p></div>
 </body>
 </html>
