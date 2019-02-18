@@ -2,8 +2,6 @@ import Browser
 import Html
 import Html.Attributes
 import Html.Events
-import Random
-import Time
 import Svg
 import Svg.Attributes exposing (..)
 import Svg.Events
@@ -13,7 +11,6 @@ main = Browser.element { init = init, update = update, subscriptions = subscript
 
 type MirrorRotation = LeftTop | LeftBottom | RightTop | RightBottom
 type alias ObjectMirror = { x : Int, y : Int, r : MirrorRotation }
-type alias ObjectPrism = { x : Int, y : Int }
 type alias ObjectCell = { x : Int, y : Int }
 type alias ObjectBattery = { x : Int, y : Int }
 
@@ -42,15 +39,12 @@ update msg model =
     Rotate n ->
       ({model | objects = arrayUpdate n updateObject model.objects} , Cmd.none)
 
-
--- (\m -> { m | r = (rotationNext m.r) })
+updateObject : Object -> Object
 updateObject object =
   case object of
     Mirror v -> Mirror {v | r = (rotationNext v.r)}
     Battery v -> Battery v
     Cell v -> Cell v
-    
-
 
 arrayUpdate : Int -> (a -> a) -> Array a -> Array a
 arrayUpdate n fun array =
@@ -107,9 +101,9 @@ drawBattery (n, { x, y }) =
 drawObject : (Int, Object) -> (Svg.Svg Msg)
 drawObject (n, object) =
   case object of
-    Mirror v -> (drawMirror (n, v))
-    Cell v -> (drawCell (n, v))
-    Battery v -> (drawBattery (n, v))
+    Mirror v -> drawMirror (n, v)
+    Cell v -> drawCell (n, v)
+    Battery v -> drawBattery (n, v)
 
 view : Model -> Html.Html Msg
 view model =
