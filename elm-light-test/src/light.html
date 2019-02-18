@@ -4888,18 +4888,36 @@ var author$project$Main$init = function (_n0) {
 			objects: elm$core$Array$fromList(
 				_List_fromArray(
 					[
-						author$project$Main$Mirror(
-						{r: author$project$Main$LeftTop, x: 300, y: 100}),
-						author$project$Main$Mirror(
-						{r: author$project$Main$LeftBottom, x: 500, y: 100}),
-						author$project$Main$Mirror(
-						{r: author$project$Main$RightTop, x: 300, y: 300}),
-						author$project$Main$Mirror(
-						{r: author$project$Main$RightBottom, x: 500, y: 300}),
-						author$project$Main$Battery(
-						{x: 700, y: 300}),
-						author$project$Main$Cell(
-						{x: 100, y: 300})
+						{
+						_class: author$project$Main$Cell(
+							{}),
+						p: {x: 100, y: 300}
+					},
+						{
+						_class: author$project$Main$Mirror(
+							{r: author$project$Main$RightBottom}),
+						p: {x: 300, y: 100}
+					},
+						{
+						_class: author$project$Main$Mirror(
+							{r: author$project$Main$LeftBottom}),
+						p: {x: 500, y: 100}
+					},
+						{
+						_class: author$project$Main$Mirror(
+							{r: author$project$Main$LeftTop}),
+						p: {x: 300, y: 300}
+					},
+						{
+						_class: author$project$Main$Mirror(
+							{r: author$project$Main$RightTop}),
+						p: {x: 500, y: 300}
+					},
+						{
+						_class: author$project$Main$Battery(
+							{}),
+						p: {x: 700, y: 300}
+					}
 					]))
 		},
 		elm$core$Platform$Cmd$none);
@@ -5021,21 +5039,22 @@ var author$project$Main$rotationNext = function (rotation) {
 	}
 };
 var author$project$Main$updateObject = function (object) {
-	switch (object.$) {
+	var _n0 = object._class;
+	switch (_n0.$) {
 		case 'Mirror':
-			var v = object.a;
-			return author$project$Main$Mirror(
-				_Utils_update(
-					v,
-					{
-						r: author$project$Main$rotationNext(v.r)
-					}));
+			var v = _n0.a;
+			return _Utils_update(
+				object,
+				{
+					_class: author$project$Main$Mirror(
+						{
+							r: author$project$Main$rotationNext(v.r)
+						})
+				});
 		case 'Battery':
-			var v = object.a;
-			return author$project$Main$Battery(v);
+			return object;
 		default:
-			var v = object.a;
-			return author$project$Main$Cell(v);
+			return object;
 	}
 };
 var author$project$Main$update = F2(
@@ -5048,6 +5067,39 @@ var author$project$Main$update = F2(
 					objects: A3(author$project$Main$arrayUpdate, n, author$project$Main$updateObject, model.objects)
 				}),
 			elm$core$Platform$Cmd$none);
+	});
+var author$project$Main$boolToString = function (v) {
+	return v ? 'True' : 'False';
+};
+var author$project$Main$isIntersectionLineSegmentLineSegment = F4(
+	function (p1, p2, p3, p4) {
+		var y4 = p4.y;
+		var y3 = p3.y;
+		var y2 = p2.y;
+		var y1 = p1.y;
+		var x4 = p4.x;
+		var x3 = p3.x;
+		var x2 = p2.x;
+		var x1 = p1.x;
+		var ubn = ((x2 - x1) * (y1 - y3)) - ((y2 - y1) * (x1 - x3));
+		var uan = ((x4 - x3) * (y1 - y3)) - ((y4 - y3) * (x1 - x3));
+		var d = ((y4 - y3) * (x2 - x1)) - ((x4 - x3) * (y2 - y1));
+		if (!d) {
+			return false;
+		} else {
+			var ub = ubn / d;
+			var ua = uan / d;
+			return (ua > 0.0) && ((ua < 1.0) && ((ub > 0.0) && (ub < 1.0)));
+		}
+	});
+var author$project$Main$isIntersectionLineSegmentPoint = F3(
+	function (p1, p2, p3) {
+		var pp4 = {x: p3.x - 5, y: p3.y + 5};
+		var pp3 = {x: p3.x + 5, y: p3.y + 5};
+		var pp2 = {x: p3.x + 5, y: p3.y - 5};
+		var pp1 = {x: p3.x - 5, y: p3.y - 5};
+		var intersect = author$project$Main$isIntersectionLineSegmentLineSegment;
+		return A4(intersect, p1, p2, pp1, pp2) || (A4(intersect, p1, p2, pp2, pp3) || (A4(intersect, p1, p2, pp3, pp4) || A4(intersect, p1, p2, pp4, pp1)));
 	});
 var author$project$Main$Rotate = function (a) {
 	return {$: 'Rotate', a: a};
@@ -5108,108 +5160,104 @@ var elm$svg$Svg$Events$onClick = function (msg) {
 		'click',
 		elm$json$Json$Decode$succeed(msg));
 };
-var author$project$Main$drawBattery = function (_n0) {
-	var n = _n0.a;
-	var x = _n0.b.x;
-	var y = _n0.b.y;
-	return A2(
-		elm$svg$Svg$g,
-		_List_fromArray(
-			[
-				elm$svg$Svg$Attributes$transform(
-				'translate(' + (elm$core$String$fromInt(x) + (',' + (elm$core$String$fromInt(y) + ')'))))
-			]),
-		_List_fromArray(
-			[
-				A2(
-				elm$svg$Svg$rect,
-				_List_fromArray(
-					[
-						elm$svg$Svg$Attributes$x('-20'),
-						elm$svg$Svg$Attributes$y('-20'),
-						elm$svg$Svg$Attributes$width('40'),
-						elm$svg$Svg$Attributes$height('40'),
-						elm$svg$Svg$Attributes$rx('5'),
-						elm$svg$Svg$Attributes$ry('5'),
-						elm$svg$Svg$Attributes$fill('#ccc'),
-						elm$svg$Svg$Events$onClick(
-						author$project$Main$Rotate(n))
-					]),
-				_List_Nil),
-				A2(
-				elm$svg$Svg$circle,
-				_List_fromArray(
-					[
-						elm$svg$Svg$Attributes$x('0'),
-						elm$svg$Svg$Attributes$y('0'),
-						elm$svg$Svg$Attributes$r('10'),
-						elm$svg$Svg$Attributes$fill('#000')
-					]),
-				_List_Nil),
-				A2(
-				elm$svg$Svg$image,
-				_List_fromArray(
-					[
-						elm$svg$Svg$Attributes$x('20'),
-						elm$svg$Svg$Attributes$y('20'),
-						elm$svg$Svg$Attributes$width('40'),
-						elm$svg$Svg$Attributes$height('40'),
-						elm$svg$Svg$Attributes$xlinkHref('battery-pack-alt.svg')
-					]),
-				_List_Nil)
-			]));
-};
-var author$project$Main$drawCell = function (_n0) {
-	var n = _n0.a;
-	var x = _n0.b.x;
-	var y = _n0.b.y;
-	return A2(
-		elm$svg$Svg$g,
-		_List_fromArray(
-			[
-				elm$svg$Svg$Attributes$transform(
-				'translate(' + (elm$core$String$fromInt(x) + (',' + (elm$core$String$fromInt(y) + ')'))))
-			]),
-		_List_fromArray(
-			[
-				A2(
-				elm$svg$Svg$rect,
-				_List_fromArray(
-					[
-						elm$svg$Svg$Attributes$x('-20'),
-						elm$svg$Svg$Attributes$y('-20'),
-						elm$svg$Svg$Attributes$width('40'),
-						elm$svg$Svg$Attributes$height('40'),
-						elm$svg$Svg$Attributes$rx('5'),
-						elm$svg$Svg$Attributes$ry('5'),
-						elm$svg$Svg$Attributes$fill('#ccc'),
-						elm$svg$Svg$Events$onClick(
-						author$project$Main$Rotate(n))
-					]),
-				_List_Nil),
-				A2(
-				elm$svg$Svg$circle,
-				_List_fromArray(
-					[
-						elm$svg$Svg$Attributes$x('0'),
-						elm$svg$Svg$Attributes$y('0'),
-						elm$svg$Svg$Attributes$r('10'),
-						elm$svg$Svg$Attributes$fill('#000')
-					]),
-				_List_Nil),
-				A2(
-				elm$svg$Svg$image,
-				_List_fromArray(
-					[
-						elm$svg$Svg$Attributes$x('20'),
-						elm$svg$Svg$Attributes$y('20'),
-						elm$svg$Svg$Attributes$width('40'),
-						elm$svg$Svg$Attributes$height('40'),
-						elm$svg$Svg$Attributes$xlinkHref('laser-warning.svg')
-					]),
-				_List_Nil)
-			]));
-};
+var author$project$Main$viewBattery = F2(
+	function (n, p) {
+		return A2(
+			elm$svg$Svg$g,
+			_List_fromArray(
+				[
+					elm$svg$Svg$Attributes$transform(
+					'translate(' + (elm$core$String$fromInt(p.x) + (',' + (elm$core$String$fromInt(p.y) + ')'))))
+				]),
+			_List_fromArray(
+				[
+					A2(
+					elm$svg$Svg$rect,
+					_List_fromArray(
+						[
+							elm$svg$Svg$Attributes$x('-20'),
+							elm$svg$Svg$Attributes$y('-20'),
+							elm$svg$Svg$Attributes$width('40'),
+							elm$svg$Svg$Attributes$height('40'),
+							elm$svg$Svg$Attributes$rx('5'),
+							elm$svg$Svg$Attributes$ry('5'),
+							elm$svg$Svg$Attributes$fill('#ccc'),
+							elm$svg$Svg$Events$onClick(
+							author$project$Main$Rotate(n))
+						]),
+					_List_Nil),
+					A2(
+					elm$svg$Svg$circle,
+					_List_fromArray(
+						[
+							elm$svg$Svg$Attributes$x('0'),
+							elm$svg$Svg$Attributes$y('0'),
+							elm$svg$Svg$Attributes$r('10'),
+							elm$svg$Svg$Attributes$fill('#000')
+						]),
+					_List_Nil),
+					A2(
+					elm$svg$Svg$image,
+					_List_fromArray(
+						[
+							elm$svg$Svg$Attributes$x('20'),
+							elm$svg$Svg$Attributes$y('20'),
+							elm$svg$Svg$Attributes$width('40'),
+							elm$svg$Svg$Attributes$height('40'),
+							elm$svg$Svg$Attributes$xlinkHref('battery-pack-alt.svg')
+						]),
+					_List_Nil)
+				]));
+	});
+var author$project$Main$viewCell = F2(
+	function (n, p) {
+		return A2(
+			elm$svg$Svg$g,
+			_List_fromArray(
+				[
+					elm$svg$Svg$Attributes$transform(
+					'translate(' + (elm$core$String$fromInt(p.x) + (',' + (elm$core$String$fromInt(p.y) + ')'))))
+				]),
+			_List_fromArray(
+				[
+					A2(
+					elm$svg$Svg$rect,
+					_List_fromArray(
+						[
+							elm$svg$Svg$Attributes$x('-20'),
+							elm$svg$Svg$Attributes$y('-20'),
+							elm$svg$Svg$Attributes$width('40'),
+							elm$svg$Svg$Attributes$height('40'),
+							elm$svg$Svg$Attributes$rx('5'),
+							elm$svg$Svg$Attributes$ry('5'),
+							elm$svg$Svg$Attributes$fill('#ccc'),
+							elm$svg$Svg$Events$onClick(
+							author$project$Main$Rotate(n))
+						]),
+					_List_Nil),
+					A2(
+					elm$svg$Svg$circle,
+					_List_fromArray(
+						[
+							elm$svg$Svg$Attributes$x('0'),
+							elm$svg$Svg$Attributes$y('0'),
+							elm$svg$Svg$Attributes$r('10'),
+							elm$svg$Svg$Attributes$fill('#000')
+						]),
+					_List_Nil),
+					A2(
+					elm$svg$Svg$image,
+					_List_fromArray(
+						[
+							elm$svg$Svg$Attributes$x('20'),
+							elm$svg$Svg$Attributes$y('20'),
+							elm$svg$Svg$Attributes$width('40'),
+							elm$svg$Svg$Attributes$height('40'),
+							elm$svg$Svg$Attributes$xlinkHref('laser-warning.svg')
+						]),
+					_List_Nil)
+				]));
+	});
 var author$project$Main$rotationToSvgTransform = function (rotation) {
 	switch (rotation.$) {
 		case 'LeftTop':
@@ -5225,85 +5273,252 @@ var author$project$Main$rotationToSvgTransform = function (rotation) {
 var elm$svg$Svg$polygon = elm$svg$Svg$trustedNode('polygon');
 var elm$svg$Svg$Attributes$points = _VirtualDom_attribute('points');
 var elm$svg$Svg$Attributes$style = _VirtualDom_attribute('style');
-var author$project$Main$drawMirror = function (_n0) {
-	var n = _n0.a;
-	var x = _n0.b.x;
-	var y = _n0.b.y;
-	var r = _n0.b.r;
-	return A2(
-		elm$svg$Svg$g,
-		_List_fromArray(
-			[
-				elm$svg$Svg$Attributes$transform(
-				'translate(' + (elm$core$String$fromInt(x) + (',' + (elm$core$String$fromInt(y) + ')'))))
-			]),
-		_List_fromArray(
-			[
-				A2(
-				elm$svg$Svg$rect,
-				_List_fromArray(
-					[
-						elm$svg$Svg$Attributes$x('-20'),
-						elm$svg$Svg$Attributes$y('-20'),
-						elm$svg$Svg$Attributes$width('40'),
-						elm$svg$Svg$Attributes$height('40'),
-						elm$svg$Svg$Attributes$rx('5'),
-						elm$svg$Svg$Attributes$ry('5'),
-						elm$svg$Svg$Attributes$fill('#ccf'),
-						elm$svg$Svg$Events$onClick(
-						author$project$Main$Rotate(n))
-					]),
-				_List_Nil),
-				A2(
-				elm$svg$Svg$image,
-				_List_fromArray(
-					[
-						elm$svg$Svg$Attributes$x('20'),
-						elm$svg$Svg$Attributes$y('20'),
-						elm$svg$Svg$Attributes$width('40'),
-						elm$svg$Svg$Attributes$height('40'),
-						elm$svg$Svg$Attributes$xlinkHref('mirror-mirror.svg')
-					]),
-				_List_Nil),
-				A2(
-				elm$svg$Svg$g,
-				_List_fromArray(
-					[
-						elm$svg$Svg$Attributes$transform(
-						author$project$Main$rotationToSvgTransform(r))
-					]),
-				_List_fromArray(
-					[
-						A2(
-						elm$svg$Svg$polygon,
-						_List_fromArray(
-							[
-								elm$svg$Svg$Attributes$points('-10,10 10,10 10,-10'),
-								elm$svg$Svg$Attributes$fill('#000'),
-								elm$svg$Svg$Attributes$style('pointer-events: none')
-							]),
-						_List_Nil)
-					]))
-			]));
-};
-var author$project$Main$drawObject = function (_n0) {
+var author$project$Main$viewMirror = F3(
+	function (n, p, r) {
+		return A2(
+			elm$svg$Svg$g,
+			_List_fromArray(
+				[
+					elm$svg$Svg$Attributes$transform(
+					'translate(' + (elm$core$String$fromInt(p.x) + (',' + (elm$core$String$fromInt(p.y) + ')'))))
+				]),
+			_List_fromArray(
+				[
+					A2(
+					elm$svg$Svg$rect,
+					_List_fromArray(
+						[
+							elm$svg$Svg$Attributes$x('-20'),
+							elm$svg$Svg$Attributes$y('-20'),
+							elm$svg$Svg$Attributes$width('40'),
+							elm$svg$Svg$Attributes$height('40'),
+							elm$svg$Svg$Attributes$rx('5'),
+							elm$svg$Svg$Attributes$ry('5'),
+							elm$svg$Svg$Attributes$fill('#ccf'),
+							elm$svg$Svg$Events$onClick(
+							author$project$Main$Rotate(n))
+						]),
+					_List_Nil),
+					A2(
+					elm$svg$Svg$image,
+					_List_fromArray(
+						[
+							elm$svg$Svg$Attributes$x('20'),
+							elm$svg$Svg$Attributes$y('20'),
+							elm$svg$Svg$Attributes$width('40'),
+							elm$svg$Svg$Attributes$height('40'),
+							elm$svg$Svg$Attributes$xlinkHref('mirror-mirror.svg')
+						]),
+					_List_Nil),
+					A2(
+					elm$svg$Svg$g,
+					_List_fromArray(
+						[
+							elm$svg$Svg$Attributes$transform(
+							author$project$Main$rotationToSvgTransform(r))
+						]),
+					_List_fromArray(
+						[
+							A2(
+							elm$svg$Svg$polygon,
+							_List_fromArray(
+								[
+									elm$svg$Svg$Attributes$points('-10,10 10,10 10,-10'),
+									elm$svg$Svg$Attributes$fill('#000'),
+									elm$svg$Svg$Attributes$style('pointer-events: none')
+								]),
+							_List_Nil)
+						]))
+				]));
+	});
+var author$project$Main$viewObject = function (_n0) {
 	var n = _n0.a;
 	var object = _n0.b;
-	switch (object.$) {
+	var _n1 = object._class;
+	switch (_n1.$) {
 		case 'Mirror':
-			var v = object.a;
-			return author$project$Main$drawMirror(
-				_Utils_Tuple2(n, v));
+			var v = _n1.a;
+			return A3(author$project$Main$viewMirror, n, object.p, v.r);
 		case 'Cell':
-			var v = object.a;
-			return author$project$Main$drawCell(
-				_Utils_Tuple2(n, v));
+			var v = _n1.a;
+			return A2(author$project$Main$viewCell, n, object.p);
 		default:
-			var v = object.a;
-			return author$project$Main$drawBattery(
-				_Utils_Tuple2(n, v));
+			var v = _n1.a;
+			return A2(author$project$Main$viewBattery, n, object.p);
 	}
 };
+var author$project$Main$square = function (v) {
+	return v * v;
+};
+var author$project$Main$distanceSquared = F2(
+	function (p1, p2) {
+		return author$project$Main$square(p1.x - p2.x) + author$project$Main$square(p1.y - p2.y);
+	});
+var elm$core$Array$filter = F2(
+	function (isGood, array) {
+		return elm$core$Array$fromList(
+			A3(
+				elm$core$Array$foldr,
+				F2(
+					function (x, xs) {
+						return isGood(x) ? A2(elm$core$List$cons, x, xs) : xs;
+					}),
+				_List_Nil,
+				array));
+	});
+var elm$core$Elm$JsArray$map = _JsArray_map;
+var elm$core$Array$map = F2(
+	function (func, _n0) {
+		var len = _n0.a;
+		var startShift = _n0.b;
+		var tree = _n0.c;
+		var tail = _n0.d;
+		var helper = function (node) {
+			if (node.$ === 'SubTree') {
+				var subTree = node.a;
+				return elm$core$Array$SubTree(
+					A2(elm$core$Elm$JsArray$map, helper, subTree));
+			} else {
+				var values = node.a;
+				return elm$core$Array$Leaf(
+					A2(elm$core$Elm$JsArray$map, func, values));
+			}
+		};
+		return A4(
+			elm$core$Array$Array_elm_builtin,
+			len,
+			startShift,
+			A2(elm$core$Elm$JsArray$map, helper, tree),
+			A2(elm$core$Elm$JsArray$map, func, tail));
+	});
+var elm$core$Basics$not = _Basics_not;
+var author$project$Main$findClosest = F3(
+	function (objects, p, dir) {
+		var y1 = p.y;
+		var y2 = y1 + dir.y;
+		var x1 = p.x;
+		var x2 = x1 + dir.x;
+		var isIntersected = function (object) {
+			return (!(_Utils_eq(object.p.x, x1) && _Utils_eq(object.p.y, y1))) && A3(
+				author$project$Main$isIntersectionLineSegmentPoint,
+				{x: x1, y: y1},
+				{x: x2, y: y2},
+				{x: object.p.x, y: object.p.y});
+		};
+		var intersected = A2(elm$core$Array$filter, isIntersected, objects);
+		var distance = function (object) {
+			return A2(
+				author$project$Main$distanceSquared,
+				{x: x1, y: y1},
+				{x: object.p.x, y: object.p.y});
+		};
+		var distances = A2(elm$core$Array$map, distance, intersected);
+		var _n0 = A2(elm$core$Array$get, 0, intersected);
+		if (_n0.$ === 'Just') {
+			var v = _n0.a;
+			return elm$core$Maybe$Just(v);
+		} else {
+			return elm$core$Maybe$Nothing;
+		}
+	});
+var elm$core$String$fromFloat = _String_fromNumber;
+var elm$svg$Svg$line = elm$svg$Svg$trustedNode('line');
+var elm$svg$Svg$Attributes$stroke = _VirtualDom_attribute('stroke');
+var elm$svg$Svg$Attributes$strokeWidth = _VirtualDom_attribute('stroke-width');
+var elm$svg$Svg$Attributes$x1 = _VirtualDom_attribute('x1');
+var elm$svg$Svg$Attributes$x2 = _VirtualDom_attribute('x2');
+var elm$svg$Svg$Attributes$y1 = _VirtualDom_attribute('y1');
+var elm$svg$Svg$Attributes$y2 = _VirtualDom_attribute('y2');
+var author$project$Main$viewLine = F3(
+	function (p1, p2, width) {
+		return A2(
+			elm$svg$Svg$line,
+			_List_fromArray(
+				[
+					elm$svg$Svg$Attributes$x1(
+					elm$core$String$fromInt(p1.x)),
+					elm$svg$Svg$Attributes$y1(
+					elm$core$String$fromInt(p1.y)),
+					elm$svg$Svg$Attributes$x2(
+					elm$core$String$fromInt(p2.x)),
+					elm$svg$Svg$Attributes$y2(
+					elm$core$String$fromInt(p2.y)),
+					elm$svg$Svg$Attributes$stroke('red'),
+					elm$svg$Svg$Attributes$strokeWidth(
+					elm$core$String$fromFloat(width))
+				]),
+			_List_Nil);
+	});
+var elm$core$Basics$negate = function (n) {
+	return -n;
+};
+var author$project$Main$viewRay = F4(
+	function (objects, current, incident, strength) {
+		if (strength < 0.5) {
+			return _List_Nil;
+		} else {
+			var _n0 = current._class;
+			switch (_n0.$) {
+				case 'Cell':
+					var dir = {x: 222, y: 0};
+					var _n1 = A3(author$project$Main$findClosest, objects, current.p, dir);
+					if (_n1.$ === 'Just') {
+						var other = _n1.a;
+						return _Utils_ap(
+							_List_fromArray(
+								[
+									A3(author$project$Main$viewLine, current.p, other.p, strength)
+								]),
+							A4(author$project$Main$viewRay, objects, other, dir, strength - 1.0));
+					} else {
+						return _List_fromArray(
+							[
+								A3(
+								author$project$Main$viewLine,
+								current.p,
+								{x: current.p.x + dir.x, y: current.p.y + dir.y},
+								0.5)
+							]);
+					}
+				case 'Battery':
+					return _List_Nil;
+				default:
+					var mirror = _n0.a;
+					var dir = function () {
+						var _n3 = mirror.r;
+						switch (_n3.$) {
+							case 'LeftTop':
+								return {x: incident.y, y: -incident.x};
+							case 'LeftBottom':
+								return {x: -incident.y, y: incident.x};
+							case 'RightTop':
+								return {x: -incident.y, y: incident.x};
+							default:
+								return {x: incident.y, y: -incident.x};
+						}
+					}();
+					var _n2 = A3(author$project$Main$findClosest, objects, current.p, dir);
+					if (_n2.$ === 'Just') {
+						var other = _n2.a;
+						return _Utils_ap(
+							_List_fromArray(
+								[
+									A3(author$project$Main$viewLine, current.p, other.p, strength)
+								]),
+							A4(author$project$Main$viewRay, objects, other, dir, strength - 1.0));
+					} else {
+						return _List_fromArray(
+							[
+								A3(
+								author$project$Main$viewLine,
+								current.p,
+								{x: current.p.x + dir.x, y: current.p.y + dir.y},
+								0.5)
+							]);
+					}
+			}
+		}
+	});
 var elm$core$Tuple$second = function (_n0) {
 	var y = _n0.b;
 	return y;
@@ -5403,9 +5618,23 @@ var elm$virtual_dom$VirtualDom$style = _VirtualDom_style;
 var elm$html$Html$Attributes$style = elm$virtual_dom$VirtualDom$style;
 var elm$svg$Svg$svg = elm$svg$Svg$trustedNode('svg');
 var author$project$Main$view = function (model) {
-	var elements = A2(
+	var rays = function () {
+		var _n0 = A2(elm$core$Array$get, 0, model.objects);
+		if (_n0.$ === 'Just') {
+			var object = _n0.a;
+			return A4(
+				author$project$Main$viewRay,
+				model.objects,
+				object,
+				{x: 0, y: 0},
+				5.0);
+		} else {
+			return _List_Nil;
+		}
+	}();
+	var objects = A2(
 		elm$core$List$map,
-		author$project$Main$drawObject,
+		author$project$Main$viewObject,
 		elm$core$Array$toIndexedList(model.objects));
 	return A2(
 		elm$html$Html$div,
@@ -5438,7 +5667,7 @@ var author$project$Main$view = function (model) {
 								elm$svg$Svg$Attributes$x('0'),
 								elm$svg$Svg$Attributes$y('0')
 							]),
-						elements)
+						_Utils_ap(objects, rays))
 					])),
 				A2(
 				elm$html$Html$div,
@@ -5448,7 +5677,14 @@ var author$project$Main$view = function (model) {
 					]),
 				_List_fromArray(
 					[
-						elm$html$Html$text('?')
+						elm$html$Html$text('? '),
+						elm$html$Html$text(
+						author$project$Main$boolToString(
+							A3(
+								author$project$Main$isIntersectionLineSegmentPoint,
+								{x: 0, y: 0},
+								{x: 100, y: 0},
+								{x: 105, y: 0})))
 					]))
 			]));
 };
