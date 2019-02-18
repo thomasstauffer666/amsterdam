@@ -1,3 +1,6 @@
+
+-- all icons are from https://game-icons.net/
+
 import Browser
 import Html
 import Html.Attributes
