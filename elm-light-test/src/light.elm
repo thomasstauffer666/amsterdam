@@ -115,24 +115,15 @@ square : Int -> Int
 square v = v * v
 
 distanceSquared : Point -> Point -> Int
-distanceSquared p1 p2 =
-  (square (p1.x - p2.x)) + (square (p1.y - p2.y))
+distanceSquared p1 p2 = (square (p1.x - p2.x)) + (square (p1.y - p2.y))
 
 -- http://paulbourke.net/geometry/pointlineplane/
 isIntersectionLineSegmentLineSegment : Point -> Point -> Point -> Point -> Bool
 isIntersectionLineSegmentLineSegment p1 p2 p3 p4 =
   let
-    x1 = p1.x
-    x2 = p2.x
-    x3 = p3.x
-    x4 = p4.x
-    y1 = p1.y
-    y2 = p2.y
-    y3 = p3.y
-    y4 = p4.y
-    uan = (x4 - x3) * (y1 - y3) - (y4 - y3) * (x1 - x3)
-    ubn = (x2 - x1) * (y1 - y3) - (y2 - y1) * (x1 - x3)
-    d = (y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1)
+    uan = (p4.x - p3.x) * (p1.y - p3.y) - (p4.y - p3.y) * (p1.x - p3.x)
+    ubn = (p2.x - p1.x) * (p1.y - p3.y) - (p2.y - p1.y) * (p1.x - p3.x)
+    d = (p4.y - p3.y) * (p2.x - p1.x) - (p4.x - p3.x) * (p2.y - p1.y)
   in
     if d == 0 then
       False
@@ -158,20 +149,14 @@ isIntersectionLineSegmentPoint p1 p2 p3 =
 findClosest : Array Object -> Point -> Direction -> Maybe Object
 findClosest objects p dir =
   let
-    x1 = p.x
-    y1 = p.y
-    x2 = x1 + dir.x
-    y2 = y1 + dir.y
-    isIntersected object = (not ((object.p.x == x1) && (object.p.y == y1))) && (isIntersectionLineSegmentPoint {x = x1, y = y1} {x = x2, y = y2} {x = object.p.x, y = object.p.y})
-    distance object = distanceSquared {x = x1, y = y1} {x = object.p.x, y = object.p.y} 
+    p2 = {x = p.x + dir.x, y = p.y + dir.y}
+    isIntersected object = (not ((object.p.x == p.x) && (object.p.y == p.y))) && (isIntersectionLineSegmentPoint p p2 object.p)
+    distance object = distanceSquared p object.p
     intersected = Array.filter isIntersected objects
     distances = Array.map distance intersected
-    -- TODO sort array? and just closest one
   in
-    --Nothing
-    case (Array.get 0 intersected) of
-      Just v -> Just v
-      Nothing -> Nothing
+    -- TODO fix this, it is not always the first elment. sort array (how? conver to list and back?) and just take closest one
+    Array.get 0 intersected
 
 viewRay : Array Object -> Object -> Direction -> Float -> List (Svg.Svg Msg)
 viewRay objects current incident strength =
