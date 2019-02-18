@@ -9,7 +9,7 @@
 
 [js-webgl-test](https://thomasstauffer666.github.io/amsterdam/js-webgl-test/index.html)
 
-[elm-light-test](https://thomasstauffer666.github.io/amsterdam/elm-light-test/light.html)
+[elm-light-test](https://thomasstauffer666.github.io/amsterdam/elm-light-test/src/light.html)
 
 ## Map
 
