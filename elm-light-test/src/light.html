@@ -5073,17 +5073,9 @@ var author$project$Main$boolToString = function (v) {
 };
 var author$project$Main$isIntersectionLineSegmentLineSegment = F4(
 	function (p1, p2, p3, p4) {
-		var y4 = p4.y;
-		var y3 = p3.y;
-		var y2 = p2.y;
-		var y1 = p1.y;
-		var x4 = p4.x;
-		var x3 = p3.x;
-		var x2 = p2.x;
-		var x1 = p1.x;
-		var ubn = ((x2 - x1) * (y1 - y3)) - ((y2 - y1) * (x1 - x3));
-		var uan = ((x4 - x3) * (y1 - y3)) - ((y4 - y3) * (x1 - x3));
-		var d = ((y4 - y3) * (x2 - x1)) - ((x4 - x3) * (y2 - y1));
+		var ubn = ((p2.x - p1.x) * (p1.y - p3.y)) - ((p2.y - p1.y) * (p1.x - p3.x));
+		var uan = ((p4.x - p3.x) * (p1.y - p3.y)) - ((p4.y - p3.y) * (p1.x - p3.x));
+		var d = ((p4.y - p3.y) * (p2.x - p1.x)) - ((p4.x - p3.x) * (p2.y - p1.y));
 		if (!d) {
 			return false;
 		} else {
@@ -5101,6 +5093,7 @@ var author$project$Main$isIntersectionLineSegmentPoint = F3(
 		var intersect = author$project$Main$isIntersectionLineSegmentLineSegment;
 		return A4(intersect, p1, p2, pp1, pp2) || (A4(intersect, p1, p2, pp2, pp3) || (A4(intersect, p1, p2, pp3, pp4) || A4(intersect, p1, p2, pp4, pp1)));
 	});
+var author$project$Main$myStyle = '\n    line {\n      stroke-dasharray: 10;\n      animation: dash 10s linear;\n      animation-iteration-count:infinite;\n    }\n\n    @keyframes dash {\n    to {\n      stroke-dashoffset: -1000;\n    }\n  ';
 var author$project$Main$Rotate = function (a) {
 	return {$: 'Rotate', a: a};
 };
@@ -5394,32 +5387,16 @@ var elm$core$Array$map = F2(
 var elm$core$Basics$not = _Basics_not;
 var author$project$Main$findClosest = F3(
 	function (objects, p, dir) {
-		var y1 = p.y;
-		var y2 = y1 + dir.y;
-		var x1 = p.x;
-		var x2 = x1 + dir.x;
+		var p2 = {x: p.x + dir.x, y: p.y + dir.y};
 		var isIntersected = function (object) {
-			return (!(_Utils_eq(object.p.x, x1) && _Utils_eq(object.p.y, y1))) && A3(
-				author$project$Main$isIntersectionLineSegmentPoint,
-				{x: x1, y: y1},
-				{x: x2, y: y2},
-				{x: object.p.x, y: object.p.y});
+			return (!(_Utils_eq(object.p.x, p.x) && _Utils_eq(object.p.y, p.y))) && A3(author$project$Main$isIntersectionLineSegmentPoint, p, p2, object.p);
 		};
 		var intersected = A2(elm$core$Array$filter, isIntersected, objects);
 		var distance = function (object) {
-			return A2(
-				author$project$Main$distanceSquared,
-				{x: x1, y: y1},
-				{x: object.p.x, y: object.p.y});
+			return A2(author$project$Main$distanceSquared, p, object.p);
 		};
 		var distances = A2(elm$core$Array$map, distance, intersected);
-		var _n0 = A2(elm$core$Array$get, 0, intersected);
-		if (_n0.$ === 'Just') {
-			var v = _n0.a;
-			return elm$core$Maybe$Just(v);
-		} else {
-			return elm$core$Maybe$Nothing;
-		}
+		return A2(elm$core$Array$get, 0, intersected);
 	});
 var elm$core$String$fromFloat = _String_fromNumber;
 var elm$svg$Svg$line = elm$svg$Svg$trustedNode('line');
@@ -5612,6 +5589,11 @@ var elm$core$List$map = F2(
 			xs);
 	});
 var elm$html$Html$div = _VirtualDom_node('div');
+var elm$virtual_dom$VirtualDom$node = function (tag) {
+	return _VirtualDom_node(
+		_VirtualDom_noScript(tag));
+};
+var elm$html$Html$node = elm$virtual_dom$VirtualDom$node;
 var elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
 var elm$html$Html$text = elm$virtual_dom$VirtualDom$text;
 var elm$virtual_dom$VirtualDom$style = _VirtualDom_style;
@@ -5641,6 +5623,14 @@ var author$project$Main$view = function (model) {
 		_List_Nil,
 		_List_fromArray(
 			[
+				A3(
+				elm$html$Html$node,
+				'style',
+				_List_Nil,
+				_List_fromArray(
+					[
+						elm$html$Html$text(author$project$Main$myStyle)
+					])),
 				A2(
 				elm$svg$Svg$svg,
 				_List_fromArray(
