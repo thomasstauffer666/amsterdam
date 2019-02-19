@@ -187,6 +187,21 @@ viewRay objects current incident strength =
 boolToString : Bool -> String
 boolToString v = if v then "True" else "False"
 
+myStyle : String
+myStyle =
+  """
+    line {
+      stroke-dasharray: 10;
+      animation: dash 10s linear;
+      animation-iteration-count:infinite;
+    }
+
+    @keyframes dash {
+    to {
+      stroke-dashoffset: -1000;
+    }
+  """
+
 view : Model -> Html.Html Msg
 view model =
   let
@@ -196,6 +211,7 @@ view model =
     objects = List.map viewObject (Array.toIndexedList model.objects)
   in
     Html.div [] [
+      Html.node "style" [] [ Html.text myStyle ],
       Svg.svg [ width "1300", height "800", style "background-color: #eee" ] [
         Svg.circle [ x "10", y "10", r "10" ] [],
         Svg.g [ x "0", y "0" ] (objects ++ rays)
