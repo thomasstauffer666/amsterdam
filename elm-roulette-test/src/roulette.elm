@@ -9,6 +9,8 @@ import Svg.Events
 --import Debug
 import Random
 
+-- TODO use https://package.elm-lang.org/packages/elm/core/latest/Debug Debug.todo
+
 -- TODO more consistent naming
 -- TODO add outside bets
 
@@ -200,6 +202,7 @@ viewSplitV n =
   in
     roG (px + roStraightWidth2) py [ roClickArea (Bet (SplitV n)) ]
 
+-- TODO Debug.toString???
 stringFromBet bet =
   case bet of
     Straight n -> "Straight " ++ (String.fromInt n)
