@@ -11,6 +11,8 @@
 
 [js-webcomponent-test](https://thomasstauffer666.github.io/amsterdam/js-webcomponent-test/index.html)
 
+[elm-stockmarket-test](https://thomasstauffer666.github.io/amsterdam/elm-stockmarket-test/src/index.html)
+
 [elm-roulette-test](https://thomasstauffer666.github.io/amsterdam/elm-roulette-test/src/index.html)
 
 [elm-webcomponent-test](https://thomasstauffer666.github.io/amsterdam/elm-webcomponent-test/src/index.html)
