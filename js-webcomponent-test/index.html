@@ -1,0 +1,74 @@
+<html>
+<head>
+<meta charset="utf-8"/>
+<title>js-test-webcomponent</title>
+<script>
+
+'use strict';
+
+class MyCanvas extends HTMLElement {
+	constructor() {
+		super();
+
+		const shadow = this.attachShadow({mode: 'open'});
+		const canvas = document.createElement('canvas');
+		canvas.width = 320;
+		canvas.height = 240;
+		
+		const ctx = canvas.getContext('2d');
+		ctx.beginPath();
+		ctx.rect(0, 0, canvas.width, canvas.height);
+		ctx.fillStyle = '#f9f';
+		ctx.fill();
+		
+		this.shadowRoot.appendChild(canvas);
+
+		this.ctx = ctx;
+	}
+	
+	// TODO MutationObserver?
+	
+	connectedCallback() {
+		const ctx = this.ctx;
+	
+		console.log(this);
+		// TODO nothing to iterate over HTMLCollection?
+		for(let i = 0; i < this.children.length; i += 1) {
+			const node = this.children[i];
+			// TODO check what node it is
+			const x1 = node.getAttribute('x1');
+			const y1 = node.getAttribute('y1');
+			const x2 = node.getAttribute('x2');
+			const y2 = node.getAttribute('y2');
+			
+			ctx.beginPath();
+			ctx.moveTo(x1, y1);
+			ctx.lineTo(x2, y2);
+			ctx.stroke(); 
+		}
+	}
+}
+
+window.customElements.define('my-canvas', MyCanvas);
+</script>
+<style>
+body {
+	font-family: Ubuntu;
+}
+
+canvas {
+	border: 1px solid #f0f;
+}
+</style>
+</head>
+<body>
+<my-canvas>
+<my-line x1="10" y1="10" x2="100" y2="100"></my-line>
+<my-line x1="10" y1="100" x2="100" y2="10"></my-line>
+</my-canvas>
+<my-canvas>
+<my-line x1="20" y1="20" x2="200" y2="200"></my-line>
+<my-line x1="20" y1="200" x2="200" y2="20"></my-line>
+</my-canvas>
+</body>
+</html>
