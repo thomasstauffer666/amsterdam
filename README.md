@@ -15,7 +15,7 @@
 
 [elm-webcomponent-test](https://thomasstauffer666.github.io/amsterdam/elm-webcomponent-test/src/index.html)
 
-[elm-light-test](https://thomasstauffer666.github.io/amsterdam/elm-light-test/src/light.html)
+[elm-light-test](https://thomasstauffer666.github.io/amsterdam/elm-light-test/src/index.html)
 
 ## Map
 
