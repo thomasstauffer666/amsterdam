@@ -8,7 +8,7 @@ import Svg.Attributes exposing (stroke, fill, strokeWidth)
 import Svg.Events
 import Random
 
--- Note: because of how Elm handles Lists internally, new market values are added at the front of a list
+-- Note: because of how Elm handles Lists internally and the respective functions, new market values are added at the front of a list
 
 main = Browser.element {init = init, update = update, subscriptions = subscriptions, view = view}
 
@@ -26,8 +26,8 @@ update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
   case msg of
     Test -> ({ model | my = model.my + 1}, Cmd.none)
-    MarketEvent -> (model, Random.generate Evaluation (Random.int 0 20))
-    Evaluation n -> ({ model | values = n :: model.values }, Cmd.none)
+    MarketEvent -> (model, Random.generate Evaluation (Random.int -5 5))
+    Evaluation n -> ({ model | values = max 0 ((Maybe.withDefault 0 (List.head model.values)) + n) :: model.values }, Cmd.none)
 
 subscriptions : Model -> Sub Msg
 subscriptions model = Sub.none
@@ -40,6 +40,9 @@ svgLine x1 y1 x2 y2 = Svg.line [Svg.Attributes.x1 (String.fromInt x1), Svg.Attri
 
 svgRect : Int -> Int -> Int -> Int -> Svg.Svg Msg
 svgRect x y width height = Svg.rect [ Svg.Attributes.x (String.fromInt x), Svg.Attributes.y (String.fromInt y), Svg.Attributes.width (String.fromInt width), Svg.Attributes.height (String.fromInt height), strokeWidth "2", stroke "#00f", fill svgTransparent] []
+
+svgText : Int -> Int -> String -> Svg.Svg Msg
+svgText x y text = Svg.node "text" [ Svg.Attributes.x (String.fromInt x), Svg.Attributes.y (String.fromInt y), Svg.Attributes.textAnchor "", Svg.Attributes.dominantBaseline "central", Svg.Attributes.fill "#fff"] [Svg.text text]
 
 -- TODO add ticks and description
 svgGraph : List Int -> Svg.Svg Msg
@@ -57,7 +60,9 @@ svgGraph values =
   in
     Svg.g [ Svg.Attributes.transform "translate(20,20)"] [
       Svg.g [ Svg.Attributes.transform ("scale(1," ++ (String.fromFloat (height / (toFloat maximumValue))) ++ ")") ] (List.indexedMap line (List.map2 (\a b -> (a, b)) valuesFirst valuesSecond)),
-      svgRect 0 0 width height
+      svgRect 0 0 width height,
+      svgText (width + 5) 0 (String.fromInt maximumValue),
+      svgText (width + 5) (height) (String.fromInt 0)
     ]
 
 view : Model -> Html.Html Msg
