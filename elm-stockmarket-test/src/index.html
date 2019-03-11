@@ -4895,6 +4895,27 @@ var author$project$Main$subscriptions = function (model) {
 var author$project$Main$Evaluation = function (a) {
 	return {$: 'Evaluation', a: a};
 };
+var elm$core$Basics$negate = function (n) {
+	return -n;
+};
+var elm$core$List$head = function (list) {
+	if (list.b) {
+		var x = list.a;
+		var xs = list.b;
+		return elm$core$Maybe$Just(x);
+	} else {
+		return elm$core$Maybe$Nothing;
+	}
+};
+var elm$core$Maybe$withDefault = F2(
+	function (_default, maybe) {
+		if (maybe.$ === 'Just') {
+			var value = maybe.a;
+			return value;
+		} else {
+			return _default;
+		}
+	});
 var elm$core$Basics$identity = function (x) {
 	return x;
 };
@@ -5008,9 +5029,6 @@ var elm$random$Random$generate = F2(
 			elm$random$Random$Generate(
 				A2(elm$random$Random$map, tagger, generator)));
 	});
-var elm$core$Basics$negate = function (n) {
-	return -n;
-};
 var elm$core$Bitwise$and = _Bitwise_and;
 var elm$core$Bitwise$xor = _Bitwise_xor;
 var elm$random$Random$peel = function (_n0) {
@@ -5065,14 +5083,23 @@ var author$project$Main$update = F2(
 					A2(
 						elm$random$Random$generate,
 						author$project$Main$Evaluation,
-						A2(elm$random$Random$int, 0, 20)));
+						A2(elm$random$Random$int, -5, 5)));
 			default:
 				var n = msg.a;
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
 						{
-							values: A2(elm$core$List$cons, n, model.values)
+							values: A2(
+								elm$core$List$cons,
+								A2(
+									elm$core$Basics$max,
+									0,
+									A2(
+										elm$core$Maybe$withDefault,
+										0,
+										elm$core$List$head(model.values)) + n),
+								model.values)
 						}),
 					elm$core$Platform$Cmd$none);
 		}
@@ -5149,6 +5176,35 @@ var author$project$Main$svgRect = F4(
 					elm$svg$Svg$Attributes$fill(author$project$Main$svgTransparent)
 				]),
 			_List_Nil);
+	});
+var elm$virtual_dom$VirtualDom$nodeNS = function (tag) {
+	return _VirtualDom_nodeNS(
+		_VirtualDom_noScript(tag));
+};
+var elm$svg$Svg$node = elm$virtual_dom$VirtualDom$nodeNS('http://www.w3.org/2000/svg');
+var elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
+var elm$svg$Svg$text = elm$virtual_dom$VirtualDom$text;
+var elm$svg$Svg$Attributes$dominantBaseline = _VirtualDom_attribute('dominant-baseline');
+var elm$svg$Svg$Attributes$textAnchor = _VirtualDom_attribute('text-anchor');
+var author$project$Main$svgText = F3(
+	function (x, y, text) {
+		return A3(
+			elm$svg$Svg$node,
+			'text',
+			_List_fromArray(
+				[
+					elm$svg$Svg$Attributes$x(
+					elm$core$String$fromInt(x)),
+					elm$svg$Svg$Attributes$y(
+					elm$core$String$fromInt(y)),
+					elm$svg$Svg$Attributes$textAnchor(''),
+					elm$svg$Svg$Attributes$dominantBaseline('central'),
+					elm$svg$Svg$Attributes$fill('#fff')
+				]),
+			_List_fromArray(
+				[
+					elm$svg$Svg$text(text)
+				]));
 	});
 var elm$core$List$maximum = function (list) {
 	if (list.b) {
@@ -5295,15 +5351,6 @@ var elm$core$List$take = F2(
 	function (n, list) {
 		return A3(elm$core$List$takeFast, 0, n, list);
 	});
-var elm$core$Maybe$withDefault = F2(
-	function (_default, maybe) {
-		if (maybe.$ === 'Just') {
-			var value = maybe.a;
-			return value;
-		} else {
-			return _default;
-		}
-	});
 var elm$core$String$fromFloat = _String_fromNumber;
 var elm$svg$Svg$g = elm$svg$Svg$trustedNode('g');
 var elm$svg$Svg$Attributes$transform = _VirtualDom_attribute('transform');
@@ -5355,12 +5402,21 @@ var author$project$Main$svgGraph = function (values) {
 							}),
 						valuesFirst,
 						valuesSecond))),
-				A4(author$project$Main$svgRect, 0, 0, width, height)
+				A4(author$project$Main$svgRect, 0, 0, width, height),
+				A3(
+				author$project$Main$svgText,
+				width + 5,
+				0,
+				elm$core$String$fromInt(maximumValue)),
+				A3(
+				author$project$Main$svgText,
+				width + 5,
+				height,
+				elm$core$String$fromInt(0))
 			]));
 };
 var elm$html$Html$button = _VirtualDom_node('button');
 var elm$html$Html$div = _VirtualDom_node('div');
-var elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
 var elm$html$Html$text = elm$virtual_dom$VirtualDom$text;
 var elm$virtual_dom$VirtualDom$Normal = function (a) {
 	return {$: 'Normal', a: a};
