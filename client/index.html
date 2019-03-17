@@ -11,11 +11,23 @@
     #sprite.left {
       transform: scaleX(-1);
     }
+    body {
+      background-image: url('img/bg.png') ;
+      background-repeat: no-repeat;
+      /* background-position: center center; */
+      background-size: cover;
+      /* no-repeat center center fixed; */
+      /* -webkit-background-size: cover;
+      -moz-background-size: cover;
+      -o-background-size: cover;
+      height: 100vh;
+      width: 100vw; */
+    }
   </style>
 </head>
 
 <body>
-  <img src="img/sprite02.png" alt="" height="100px" style="position: absolute" id="sprite" />
+  <img src="img/sprite02.png" alt="" height="200px" style="position: absolute" id="sprite" />
 
   <script>
     let x = 0,
@@ -102,7 +114,8 @@
         sprite.src = "img/jumpStart/jumpStart_" + (currentFrame < 10 ? "0" + currentFrame : currentFrame) + ".png";
       } else {
         const currentLoopFrame = currentFrame % jumpLoopSprites;
-        sprite.src = "img/jumpLoop/jumpLoop_" + (currentLoopFrame < 10 ? "0" + currentLoopFrame : currentLoopFrame) + ".png";
+        sprite.src = "img/jumpLoop/jumpLoop_" + (currentLoopFrame < 10 ? "0" + currentLoopFrame : currentLoopFrame) +
+          ".png";
       }
       jumpCounter += progress * 2;
 
