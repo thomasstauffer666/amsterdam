@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+  <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+</head>
+
+<body>
+  <img src="img/sprite01.png" alt="" height="100px" style="position: absolute" id="sprite" />
+
+  <script>
+    let x = 0,
+      y = 0,
+      directionRight = true;
+
+    var sock = new SockJS('http://192.168.43.235:9999/amsterdam');
+    sock.onopen = function () {
+      console.log('open');
+      sock.send('{"msg": "Jetzt kann ich laufen!"}');
+      window.addEventListener('keydown', (e) => {
+        sock.send(JSON.stringify({
+          key: e.key,
+          type: 'down'
+        }));
+      })
+      window.addEventListener('keyup', (e) => {
+        sock.send(JSON.stringify({
+          key: e.key,
+          type: 'up'
+        }));
+      })
+    };
+
+    sock.onmessage = function (e) {
+      console.log('message', e.data);
+      const coordinate = JSON.parse(e.data);
+      x = coordinate.x;
+      y = coordinate.y;
+    };
+
+    sock.onclose = function () {
+      console.log('close');
+    };
+
+    window.addEventListener('keydown', (e) => {
+      switch (e.key) {
+        case 'q':
+          if (directionRight) {directionRight = false;} else {directionRight = true}
+          break;
+        case 'a':
+          if (x < 50) {
+            x = 0;
+            directionRight = false;
+            break;
+          }
+          x -= 50;
+          directionRight = false;
+          break;
+        case 'w':
+          if (y < 50) {
+            y = 0;
+            break;
+          }
+          y -= 50;
+          break;
+        case 's':
+          y += 50;
+          break;
+        case 'd':
+          x += 50;
+          directionRight = true;
+          break;
+        default:
+          break;
+      }
+    });
+
+    let start = null;
+    const sprite = document.getElementById('sprite');
+
+    function step(timestamp) {
+      if (!start) {
+        start = timestamp;
+      }
+      const progress = timestamp - start;
+
+      if (!directionRight) {
+        sprite.src = "img/sprite01_f.png";
+      } else {
+        sprite.src = "img/sprite01.png";
+      }
+      sprite.style.left = (x) + "px";
+      sprite.style.top = (y) + "px";
+
+      window.requestAnimationFrame(step);
+    }
+
+    window.requestAnimationFrame(step);
+  </script>
+
+</body>
+
+</html>
