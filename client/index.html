@@ -7,15 +7,21 @@
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
   <title>Document</title>
   <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+  <style>
+    #sprite.left {
+      transform: scaleX(-1);
+    }
+  </style>
 </head>
 
 <body>
-  <img src="img/sprite01.png" alt="" height="100px" style="position: absolute" id="sprite" />
+  <img src="img/sprite02.png" alt="" height="100px" style="position: absolute" id="sprite" />
 
   <script>
     let x = 0,
       y = 0,
-      directionRight = true;
+      direction = 'right',
+      action = 'staying';
 
     var sock = new SockJS('http://192.168.43.235:9999/amsterdam');
     sock.onopen = function () {
@@ -26,7 +32,8 @@
           key: e.key,
           type: 'down'
         }));
-      })
+      });
+
       window.addEventListener('keyup', (e) => {
         sock.send(JSON.stringify({
           key: e.key,
@@ -37,65 +44,76 @@
 
     sock.onmessage = function (e) {
       console.log('message', e.data);
-      const coordinate = JSON.parse(e.data);
-      x = coordinate.x;
-      y = coordinate.y;
+      const data = JSON.parse(e.data);
+      x = data.x;
+      y = data.y;
+      direction = data.direction;
+      action = data.action;
     };
 
     sock.onclose = function () {
       console.log('close');
     };
 
-    window.addEventListener('keydown', (e) => {
-      switch (e.key) {
-        case 'q':
-          if (directionRight) {directionRight = false;} else {directionRight = true}
-          break;
-        case 'a':
-          if (x < 50) {
-            x = 0;
-            directionRight = false;
-            break;
-          }
-          x -= 50;
-          directionRight = false;
-          break;
-        case 'w':
-          if (y < 50) {
-            y = 0;
-            break;
-          }
-          y -= 50;
-          break;
-        case 's':
-          y += 50;
-          break;
-        case 'd':
-          x += 50;
-          directionRight = true;
-          break;
-        default:
-          break;
-      }
-    });
-
-    let start = null;
+    let lastTimestamp = null;
     const sprite = document.getElementById('sprite');
 
-    function step(timestamp) {
-      if (!start) {
-        start = timestamp;
+    const runningSprites = 12;
+    let runningCounter = 0;
+    const run = (progress) => {
+      const currentFrame = Math.floor(runningCounter);
+      sprite.src = "img/running/run_" + (currentFrame < 10 ? "0" + currentFrame : currentFrame) +
+        ".png";
+      runningCounter += progress * 2;
+      if (runningCounter >= runningSprites) {
+        runningCounter = 0;
       }
-      const progress = timestamp - start;
+    }
 
-      if (!directionRight) {
-        sprite.src = "img/sprite01_f.png";
-      } else {
-        sprite.src = "img/sprite01.png";
+    const walkingSprites = 24;
+    let walkingCounter = 0;
+    const walk = (progress) => {
+      const currentFrame = Math.floor(walkingCounter);
+      sprite.src = "img/walking/walk_" + (currentFrame < 10 ? "0" + currentFrame : currentFrame) +
+        ".png";
+      walkingCounter += progress * 2;
+      if (walkingCounter >= walkingSprites) {
+        walkingCounter = 0;
       }
+    }
+
+    const idleSprites = 36;
+    let idleCounter = 0;
+    const idle = (progress) => {
+      const currentFrame = Math.floor(idleCounter);
+      sprite.src = "img/idle/idle_" + (currentFrame < 10 ? "0" + currentFrame : currentFrame) + ".png";
+      idleCounter += progress;
+      if (idleCounter >= idleSprites) {
+        idleCounter = 0;
+      }
+    }
+
+    const step = (timestamp) => {
+      if (!lastTimestamp) {
+        lastTimestamp = timestamp;
+      }
+      const progress = (timestamp - lastTimestamp) / 100;
+      lastTimestamp = timestamp;
       sprite.style.left = (x) + "px";
       sprite.style.top = (y) + "px";
 
+      if (action == 'running' || runningCounter != 0) {
+        run(progress);
+      } else if (action == 'walking' || walkingCounter != 0) {
+        walk(progress);
+      } else {
+        idle(progress);
+      }
+      if (direction == 'left') {
+        sprite.classList.add('left');
+      } else {
+        sprite.classList.remove('left');
+      }
       window.requestAnimationFrame(step);
     }
 
