@@ -3,21 +3,23 @@
 
 ## Prototypes
 
-[js-voxel-test](https://thomasstauffer666.github.io/amsterdam/js-voxel-test/index.html)
+[js-voxel](https://thomasstauffer666.github.io/amsterdam/prototypes/js-voxel/index.html)
 
-[js-canvas-test](https://thomasstauffer666.github.io/amsterdam/js-canvas-test/index.html)
+[js-canvas](https://thomasstauffer666.github.io/amsterdam/prototypes/js-canvas/index.html)
 
-[js-webgl-test](https://thomasstauffer666.github.io/amsterdam/js-webgl-test/index.html)
+[js-webgl](https://thomasstauffer666.github.io/amsterdam/prototypes/js-webgl/index.html)
 
-[js-webcomponent-test](https://thomasstauffer666.github.io/amsterdam/js-webcomponent-test/index.html)
+[js-webcomponent](https://thomasstauffer666.github.io/amsterdam/prototypes/js-webcomponent/index.html)
 
-[elm-stockmarket-test](https://thomasstauffer666.github.io/amsterdam/elm-stockmarket-test/src/index.html)
+[js-one-server](https://thomasstauffer666.github.io/amsterdam/prototypes/js-one-server/index.html)
 
-[elm-roulette-test](https://thomasstauffer666.github.io/amsterdam/elm-roulette-test/src/index.html)
+[elm-stockmarket](https://thomasstauffer666.github.io/amsterdam/prototypes/elm-stockmarket/src/index.html)
 
-[elm-webcomponent-test](https://thomasstauffer666.github.io/amsterdam/elm-webcomponent-test/src/index.html)
+[elm-roulette](https://thomasstauffer666.github.io/amsterdam/prototypes/elm-roulette/src/index.html)
 
-[elm-light-test](https://thomasstauffer666.github.io/amsterdam/elm-light-test/src/index.html)
+[elm-webcomponent](https://thomasstauffer666.github.io/amsterdam/prototypes/elm-webcomponent/src/index.html)
+
+[elm-light](https://thomasstauffer666.github.io/amsterdam/prototypes/elm-light/src/index.html)
 
 [js-test/engine](https://thomasstauffer666.github.io/amsterdam/js-test/engine.html)
 
