@@ -117,7 +117,7 @@ class AEngine extends HTMLElement {
 		const t1 = performance.now();
 
 		this.frameCount += 1;
-		this.p.innerHTML = 'Frames:' + this.frameCount + ' DT[ms]:' + (t1 - t0);
+		this.p.innerHTML = 'Frames:' + this.frameCount + ' DT[ms]:' + Math.floor(t1 - t0);
 		this.clear(); // TODO remove if everything is overdrawn
 		this.draw();
 		window.requestAnimationFrame(this.loop.bind(this));
