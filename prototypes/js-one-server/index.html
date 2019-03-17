@@ -1,8 +1,8 @@
 <html><head>
 <meta http-equiv="content-type" content="text/html; charset=UTF-8">
 <meta charset="utf-8">
-<title>elm-webcomponent-test</title>
-<script src="elm-webcomponent-test_files/test.js"></script>
+<title>js-one-server</title>
+<script src="test.js"></script>
 <script>
 
 'use strict';
@@ -11,7 +11,6 @@ function send(message) {
 	console.log(message);
 }
 
-/*
 update();
 
 function input(event) {
@@ -22,7 +21,6 @@ function input(event) {
 document.addEventListener('keydown', input);
 document.addEventListener('keyup', input);
 
-*/
 
 function diff(a, b) {
 	const len = a.length;
@@ -34,7 +32,9 @@ function diff(a, b) {
 	}
 }
 
+
 function main() {
+	/*
 	const N = 1024 * 1024;
 	const a = new Uint8Array(N);
 	const b = new Uint8Array(N);
@@ -45,6 +45,7 @@ function main() {
 		const t2 = performance.now();
 		console.log(t2 - t1);
 	}
+	*/
 }
 
 window.onload = main;

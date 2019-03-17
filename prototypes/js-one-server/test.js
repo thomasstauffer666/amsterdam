@@ -132,5 +132,5 @@ if(isNodeJs()) {
 	update();
 	const server = http.createServer();
 	echo.installHandlers(server, {prefix:'/amsterdam'});
-	server.listen(9999, '0.0.0.0');
+	server.listen(55555, '0.0.0.0');
 }
