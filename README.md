@@ -3,25 +3,25 @@
 
 ## Prototypes
 
-[js-voxel](https://thomasstauffer666.github.io/amsterdam/prototypes/js-voxel/index.html)
+[prototypes/js-voxel](https://thomasstauffer666.github.io/amsterdam/prototypes/js-voxel/index.html)
 
-[js-canvas](https://thomasstauffer666.github.io/amsterdam/prototypes/js-canvas/index.html)
+[prototypes/js-canvas](https://thomasstauffer666.github.io/amsterdam/prototypes/js-canvas/index.html)
 
-[js-webgl](https://thomasstauffer666.github.io/amsterdam/prototypes/js-webgl/index.html)
+[prototypes/js-webgl](https://thomasstauffer666.github.io/amsterdam/prototypes/js-webgl/index.html)
 
-[js-webcomponent](https://thomasstauffer666.github.io/amsterdam/prototypes/js-webcomponent/index.html)
+[prototypes/js-webcomponent](https://thomasstauffer666.github.io/amsterdam/prototypes/js-webcomponent/index.html)
 
-[js-one-server](https://thomasstauffer666.github.io/amsterdam/prototypes/js-one-server/index.html)
+[prototypes/js-one-server](https://thomasstauffer666.github.io/amsterdam/prototypes/js-one-server/index.html)
 
-[elm-stockmarket](https://thomasstauffer666.github.io/amsterdam/prototypes/elm-stockmarket/src/index.html)
+[prototypes/js-engine](https://thomasstauffer666.github.io/amsterdam/js-engine/index.html)
 
-[elm-roulette](https://thomasstauffer666.github.io/amsterdam/prototypes/elm-roulette/src/index.html)
+[prototypes/elm-stockmarket](https://thomasstauffer666.github.io/amsterdam/prototypes/elm-stockmarket/src/index.html)
 
-[elm-webcomponent](https://thomasstauffer666.github.io/amsterdam/prototypes/elm-webcomponent/src/index.html)
+[prototypes/elm-roulette](https://thomasstauffer666.github.io/amsterdam/prototypes/elm-roulette/src/index.html)
 
-[elm-light](https://thomasstauffer666.github.io/amsterdam/prototypes/elm-light/src/index.html)
+[prototypes/elm-webcomponent](https://thomasstauffer666.github.io/amsterdam/prototypes/elm-webcomponent/src/index.html)
 
-[js-test/engine](https://thomasstauffer666.github.io/amsterdam/js-test/engine.html)
+[prototypes/elm-light](https://thomasstauffer666.github.io/amsterdam/prototypes/elm-light/src/index.html)
 
 ## Map
 
