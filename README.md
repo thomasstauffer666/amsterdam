@@ -13,7 +13,7 @@
 
 [prototypes/js-one-server](https://thomasstauffer666.github.io/amsterdam/prototypes/js-one-server/index.html)
 
-[prototypes/js-engine](https://thomasstauffer666.github.io/amsterdam/js-engine/index.html)
+[prototypes/js-engine](https://thomasstauffer666.github.io/amsterdam/prototypes/js-engine/index.html)
 
 [prototypes/elm-stockmarket](https://thomasstauffer666.github.io/amsterdam/prototypes/elm-stockmarket/src/index.html)
 
