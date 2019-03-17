@@ -87,9 +87,27 @@
     const idle = (progress) => {
       const currentFrame = Math.floor(idleCounter);
       sprite.src = "img/idle/idle_" + (currentFrame < 10 ? "0" + currentFrame : currentFrame) + ".png";
-      idleCounter += progress;
+      idleCounter += progress / 2;
       if (idleCounter >= idleSprites) {
         idleCounter = 0;
+      }
+    }
+
+    const jumpStartSprites = 6;
+    const jumpLoopSprites = 6;
+    let jumpCounter = 0;
+    const jump = (progress) => {
+      const currentFrame = Math.floor(jumpCounter);
+      if (currentFrame < 6) {
+        sprite.src = "img/jumpStart/jumpStart_" + (currentFrame < 10 ? "0" + currentFrame : currentFrame) + ".png";
+      } else {
+        const currentLoopFrame = currentFrame % jumpLoopSprites;
+        sprite.src = "img/jumpLoop/jumpLoop_" + (currentLoopFrame < 10 ? "0" + currentLoopFrame : currentLoopFrame) + ".png";
+      }
+      jumpCounter += progress * 2;
+
+      if (jumpCounter >= jumpStartSprites + jumpLoopSprites) {
+        jumpCounter = jumpStartSprites;
       }
     }
 
@@ -106,6 +124,8 @@
         run(progress);
       } else if (action == 'walking' || walkingCounter != 0) {
         walk(progress);
+      } else if (action == 'jumping' || jumpCounter != jumpStartSprites) {
+        jump(progress);
       } else {
         idle(progress);
       }
