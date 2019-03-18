@@ -1,5 +1,7 @@
 'use strict';
 
+// TODO wrap into function
+
 const clientState = {
   serverInClient: false,
   worker: undefined,
@@ -66,8 +68,9 @@ async function main() {
   const server = require('./server.js');
   let map = server.mapCreate(0, 0);
   await serverConnect('localhost', receive);
+  serverSendMessage({type: 'register', name: 'Tom', password: '42'});
+  serverSendMessage({type: 'login', name: 'Tom', password: '42'});
   serverSendMessage({type: 'chat', text: 'Hello World'});
-  serverSendMessage({type: 'map-enter', nr: 0});
   document.addEventListener('keydown', input);
   document.addEventListener('keyup', input);
 
@@ -132,6 +135,8 @@ async function main() {
       map = message.map;
     } else if (message.type === 'map-update') {
       server.mapMergeBlocks(map, message.updates);
+    } else if (message.type === 'error') {
+      console.log('error: ' + message.text);
     } else {
       console.log('client: unknown message from server', message);
     }

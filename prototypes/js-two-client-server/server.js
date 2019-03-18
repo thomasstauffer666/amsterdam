@@ -19,7 +19,7 @@ function Server() {
     const string = JSON.stringify(message);
     if (IS_NODE_RUNNING) {
       for (let connectionID in world.connections) {
-        const connection = world.connections[connectionID];
+        const connection = world.connections[connectionID].connection;
         connection.write(string);
       }
     } else {
@@ -28,7 +28,6 @@ function Server() {
   }
 
   function serverSendMessageToOneClient(connectionID, message) {
-    // TODO handle id
     const string = JSON.stringify(message);
     const length = string.length;
     if (length > 1000) {
@@ -36,7 +35,7 @@ function Server() {
     }
 
     if (IS_NODE_RUNNING) {
-      const connection = world.connections[connectionID];
+      const connection = world.connections[connectionID].connection;
       connection.write(string);
     } else {
       self.postMessage(string);
@@ -53,7 +52,10 @@ function Server() {
   }
 
   function serverSocketConnectionOpen(connectionID, connection) {
-    world.connections[connectionID] = connection;
+    world.connections[connectionID] = {
+      connection: connection,
+      playerName: undefined,
+    };
   }
 
   function serverSocketConnectionClose(connectionID, connection) {
@@ -92,14 +94,33 @@ function Server() {
 
     return map;
   }
+  
+  function playerCreate(name, password) {
+    const player = {
+      name: name,
+      password: password,
+    };
+    return player;
+  }
 
   function worldReceiveMessage(connectionID, message) {
     if (message.type === 'chat') {
       // TODO add name from player to text
-      serverSendMessageToAllClients({type: 'chat', text: message.text});
-    } else if (message.type === 'map-enter') {
-      // TODO server should do that automatically because only the server knows where the player is located after he connects
-      serverSendMessageToOneClient(connectionID, {type: 'map-state', map: world.map});
+      const playerName = world.connections[connectionID].playerName;
+      serverSendMessageToAllClients({type: 'chat', text: playerName + ': ' + message.text});
+    } else if (message.type === 'register') {
+      const name = message.name;
+      if(!(name in world.players)) {
+        world.players[name] = playerCreate(name, message.password);
+      }
+    } else if (message.type === 'login') {
+      const name = message.name;
+      if((name in world.players) && (world.players[name].password === message.password)) {
+        world.connections[connectionID].playerName = name;
+        serverSendMessageToOneClient(connectionID, {type: 'map-state', map: world.map});
+      } else {
+        serverSendMessageToOneClient(connectionID, {type: 'error', text: 'Invalid Credentials'});
+      }
     } else {
       console.log('server: unknown message from client', message);
     }
@@ -147,8 +168,8 @@ function Server() {
     }
     mapMergeBlocks(world.map, blockUpdates);
 
-    const timeoutMs = 1000;
-    setTimeout(worldTick, timeoutMs);
+    const tickMs = 500;
+    setTimeout(worldTick, tickMs);
   }
 
   function worldStartup() {
