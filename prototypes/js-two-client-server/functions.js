@@ -14,35 +14,6 @@ const state = {
   //players: [],
 };
 
-// Client
-
-async function serverConnect(url, handler) {
-  state.serverInClient = url === '';
-  if (state.serverInClient) {
-    state.worker = new Worker('client-worker.js');
-    state.worker.onmessage = function(event) {
-      handler(JSON.parse(event.data));
-    };
-  } else {
-    state.socket = new SockJS('http://' + url + ':' + SERVER_PORT + SERVER_WEBSOCKET_URL);
-    const promise = new Promise(resolve => {
-      state.socket.onopen = () => resolve();
-    });
-    state.socket.onmessage = function(event) {
-      handler(JSON.parse(event.data));
-    };
-    await promise;
-  }
-}
-
-function serverSendMessageToServer(message) {
-  if (state.serverInClient) {
-    state.worker.postMessage(JSON.stringify(message));
-  } else {
-    state.socket.send(JSON.stringify(message));
-  }
-}
-
 // Server
 
 function serverSendMessageToClients(message) {
