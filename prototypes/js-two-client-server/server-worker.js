@@ -4,5 +4,5 @@ importScripts('config.js');
 importScripts('functions.js');
 importScripts('server.js');
 
-self.onmessage = serverMessageFromWorker;
-worldStartup();
+self.onmessage = server.serverMessageFromWorker;
+server.worldStartup();
