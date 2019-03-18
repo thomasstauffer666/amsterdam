@@ -48,7 +48,12 @@ function Server() {
   }
 
   function serverMessageFromWorker(event) {
-    serverMessageFromClient(undefined, undefined, event.data);
+    serverMessageFromClient(0, undefined, event.data);
+  }
+
+  function serverWorkerOpen() {
+    const connectionID = 0;
+    serverSocketConnectionOpen(connectionID);
   }
 
   function serverSocketConnectionOpen(connectionID, connection) {
@@ -85,7 +90,7 @@ function Server() {
         if (random(6) > 1) {
           nr = config.blockNames.Wood;
         }
-        if (y == Math.floor(height / 2) && x == Math.floor(width / 2)) {
+        if (y == 2 && x == 2) {
           nr = config.blockNames.Fire;
         }
         map.blocks[index] = nr;
@@ -94,11 +99,12 @@ function Server() {
 
     return map;
   }
-  
+
   function playerCreate(name, password) {
     const player = {
       name: name,
       password: password,
+      blockUpdates: [],
     };
     return player;
   }
@@ -110,17 +116,25 @@ function Server() {
       serverSendMessageToAllClients({type: 'chat', text: playerName + ': ' + message.text});
     } else if (message.type === 'register') {
       const name = message.name;
-      if(!(name in world.players)) {
+      if (!(name in world.players)) {
         world.players[name] = playerCreate(name, message.password);
       }
     } else if (message.type === 'login') {
       const name = message.name;
-      if((name in world.players) && (world.players[name].password === message.password)) {
+      if (name in world.players && world.players[name].password === message.password) {
         world.connections[connectionID].playerName = name;
         serverSendMessageToOneClient(connectionID, {type: 'map-state', map: world.map});
       } else {
         serverSendMessageToOneClient(connectionID, {type: 'error', text: 'Invalid Credentials'});
       }
+    } else if (message.type === 'action-start') {
+      if (message.action === 'use') {
+        const playerName = world.connections[connectionID].playerName;
+        const index = Math.floor((world.map.width * world.map.height) / 2);
+        world.players[playerName].blockUpdates.push([index, config.blockNames.Fire]);
+      }
+    } else if (message.type === 'action-stop') {
+      // TODO
     } else {
       console.log('server: unknown message from client', message);
     }
@@ -145,7 +159,13 @@ function Server() {
 
     //const t1 = performance.now();
 
-    let blockUpdates = [];
+    const blockUpdates = [];
+
+    for (const playerName in world.players) {
+      blockUpdates.push(...world.players[playerName].blockUpdates);
+      world.players[playerName].blockUpdates = [];
+    }
+
     for (let y = 1; y < map.height - 1; y += 1) {
       for (let x = 1; x < map.width - 1; x += 1) {
         const index = y * map.width + x;
@@ -182,6 +202,7 @@ function Server() {
     mapMergeBlocks: mapMergeBlocks,
     mapCreate: mapCreate,
     worldStartup: worldStartup,
+    serverWorkerOpen: serverWorkerOpen,
     serverMessageFromWorker: serverMessageFromWorker,
     serverSocketConnectionOpen: serverSocketConnectionOpen,
     serverSocketConnectionClose: serverSocketConnectionClose,

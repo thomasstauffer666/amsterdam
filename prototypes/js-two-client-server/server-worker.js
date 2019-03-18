@@ -8,4 +8,5 @@ importScripts('server.js');
 const server = require('./server.js');
 
 self.onmessage = server.serverMessageFromWorker;
+server.serverWorkerOpen();
 server.worldStartup();
