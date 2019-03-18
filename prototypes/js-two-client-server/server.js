@@ -1,7 +1,7 @@
 'use strict';
 
-const server = (function() {
-  const config = typeof configGlobal === 'undefined' ? require('./config.js') : configGlobal;
+function Server() {
+  const config = require('./config.js');
 
   // TODO remove this global
   const IS_NODE_RUNNING = typeof module === 'object';
@@ -36,7 +36,8 @@ const server = (function() {
     }
 
     if (IS_NODE_RUNNING) {
-      serverSendMessageToAllClients(message);
+      const connection = world.connections[connectionID];
+      connection.write(string);
     } else {
       self.postMessage(string);
     }
@@ -65,9 +66,7 @@ const server = (function() {
 
   // World
 
-  /*
-1024 x 1024 JSON.stringify -> ca. 11 MB
-*/
+  // 1024 x 1024 JSON.stringify -> ca. 11 MB
   function mapCreate(width, height) {
     // TODO take Uint8/16/32Array, but this needs to be converted manually because JSON does not know about it
     const map = {
@@ -167,9 +166,8 @@ const server = (function() {
     serverSocketConnectionClose: serverSocketConnectionClose,
     serverMessageFromSocket: serverMessageFromSocket,
   };
-})();
+}
 
-const serverGlobal = server;
 if (typeof module === 'object') {
-  module.exports = server;
+  module.exports = Server();
 }

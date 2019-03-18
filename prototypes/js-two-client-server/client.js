@@ -7,6 +7,8 @@ const clientState = {
 };
 
 async function serverConnect(url, handler) {
+  const config = require('./config.js');
+
   clientState.serverInClient = url === '';
   if (clientState.serverInClient) {
     clientState.worker = new Worker('server-worker.js');
@@ -43,6 +45,8 @@ function imageLoad(fileName) {
 }
 
 async function blocksLoad() {
+  const config = require('./config.js');
+
   // TODO possible BLOCKS.map await/async Promise All?
   let blocks = new Array(config.blockFileNames.length);
   for (let i = 0; i < config.blockFileNames.length; i += 1) {
@@ -59,6 +63,7 @@ async function main() {
   const ctx = canvas.getContext('2d');
   const debug = document.getElementById('debug');
   const blocks = await blocksLoad();
+  const server = require('./server.js');
   let map = server.mapCreate(0, 0);
   await serverConnect('localhost', receive);
   serverSendMessage({type: 'chat', text: 'Hello World'});
