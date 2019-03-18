@@ -1,18 +1,23 @@
 'use strict';
 
+const clientState = {
+  serverInClient: false,
+  worker: undefined,
+};
+
 async function serverConnect(url, handler) {
-  state.serverInClient = url === '';
-  if (state.serverInClient) {
-    state.worker = new Worker('client-worker.js');
-    state.worker.onmessage = function(event) {
+  clientState.serverInClient = url === '';
+  if (clientState.serverInClient) {
+    clientState.worker = new Worker('server-worker.js');
+    clientState.worker.onmessage = function(event) {
       handler(JSON.parse(event.data));
     };
   } else {
-    state.socket = new SockJS('http://' + url + ':' + SERVER_PORT + SERVER_WEBSOCKET_URL);
+    clientState.socket = new SockJS('http://' + url + ':' + CONFIG.serverPort + CONFIG.serverWebsocketURL);
     const promise = new Promise(resolve => {
-      state.socket.onopen = () => resolve();
+      clientState.socket.onopen = () => resolve();
     });
-    state.socket.onmessage = function(event) {
+    clientState.socket.onmessage = function(event) {
       handler(JSON.parse(event.data));
     };
     await promise;
@@ -20,10 +25,10 @@ async function serverConnect(url, handler) {
 }
 
 function serverSendMessage(message) {
-  if (state.serverInClient) {
-    state.worker.postMessage(JSON.stringify(message));
+  if (clientState.serverInClient) {
+    clientState.worker.postMessage(JSON.stringify(message));
   } else {
-    state.socket.send(JSON.stringify(message));
+    clientState.socket.send(JSON.stringify(message));
   }
 }
 
@@ -54,7 +59,7 @@ function receive(message) {
 }
 
 async function main() {
-  await serverConnect('', receive);
+  await serverConnect('localhost', receive);
   serverSendMessage({type: 'chat', message: 'Hello World'});
   serverSendMessage({type: 'sector-enter', sector: 0});
 
