@@ -15,6 +15,6 @@ const require = (function() {
       return cache[path];
     }
 
-    throw `Module '${path}' Not Found`;
+    throw `Module '${path}' Not Defined`;
   };
 })();
