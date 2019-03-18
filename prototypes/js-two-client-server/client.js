@@ -67,7 +67,7 @@ async function main() {
   const blocks = await blocksLoad();
   const server = require('./server.js');
   let map = server.mapCreate(0, 0);
-  await serverConnect('localhost', receive);
+  await serverConnect('', receive);
   serverSendMessage({type: 'register', name: 'Tom', password: '42'});
   serverSendMessage({type: 'login', name: 'Tom', password: '42'});
   serverSendMessage({type: 'chat', text: 'Hello World'});
@@ -119,7 +119,7 @@ async function main() {
 
     if (event.key in keyToAction) {
       const message = {
-        type: 'action-' + event.type === 'keydown' ? 'start' : 'stop',
+        type: 'action-' + (event.type === 'keydown' ? 'start' : 'stop'),
         action: keyToAction[event.key],
       };
       serverSendMessage(message);
