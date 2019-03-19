@@ -60,10 +60,11 @@ async function blocksLoad() {
 async function main() {
   let frameCount = 0;
   const canvas = document.getElementById('canvas');
-  canvas.width = window.innerWidth * 0.9;
-  canvas.height = window.innerHeight * 0.9;
-
+  
+  canvas.width = document.body.clientWidth;
+  canvas.height = document.body.clientHeight;
   const ctx = canvas.getContext('2d');
+  clear();
   const debugRender = document.getElementById('debug-render');
   const blocks = await blocksLoad();
   const server = require('./server.js');
