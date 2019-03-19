@@ -62,8 +62,9 @@ async function main() {
   const canvas = document.getElementById('canvas');
   canvas.width = window.innerWidth * 0.9;
   canvas.height = window.innerHeight * 0.9;
+
   const ctx = canvas.getContext('2d');
-  const debug = document.getElementById('debug');
+  const debugRender = document.getElementById('debug-render');
   const blocks = await blocksLoad();
   const server = require('./server.js');
   let map = server.mapCreate(0, 0);
@@ -73,12 +74,19 @@ async function main() {
   serverSendMessage({type: 'chat', text: 'Hello World'});
   document.addEventListener('keydown', input);
   document.addEventListener('keyup', input);
+  document.getElementById('control-message-send').addEventListener('click', uiMessage); 
 
   function clear() {
     ctx.beginPath();
     ctx.rect(0, 0, canvas.width, canvas.height);
     ctx.fillStyle = '#eee';
     ctx.fill();
+  }
+  
+  function uiMessage(event) {
+    const text = document.getElementById('control-message-text').value;
+    const message = JSON.parse(text);
+    serverSendMessage(message);
   }
 
   function drawBlocks() {
@@ -101,7 +109,7 @@ async function main() {
     const t2 = performance.now();
 
     frameCount += 1;
-    debug.innerHTML = 'Frames:' + frameCount + ' DT[ms]:' + Math.floor(t2 - t1);
+    debugRender.innerHTML = 'Frames:' + frameCount + ' DT[ms]:' + Math.floor(t2 - t1);
     window.requestAnimationFrame(loop);
   }
 
