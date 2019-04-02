@@ -9,6 +9,9 @@ $ node --experimental-modules module.js
 export function print(message) {
 ^^^^^^
 
+
+if node.js is renamed to node.mjs and module.js to module.mjs then it seems to work at least in node
+
 */
 
 import * as my from './module.js';
