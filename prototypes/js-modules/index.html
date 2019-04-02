@@ -1,0 +1,26 @@
+<html>
+<head>
+<meta charset="utf-8"/>
+<title>engine</title>
+<script type="module" src="module.js"></script>
+<script type="module">
+
+/*
+https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/import
+*/
+
+import * as my from './module.js';
+
+function main() {
+  my.print('Hello From Browser');
+  const worker = new Worker('webworker.js', {type: 'module'});
+}
+
+window.onload = main;
+
+</script>
+</head>
+<body>
+
+</body>
+</html>

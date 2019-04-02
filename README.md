@@ -17,6 +17,8 @@
 
 [prototypes/js-engine](https://thomasstauffer666.github.io/amsterdam/prototypes/js-engine/index.html)
 
+[prototypes/js-modules](https://thomasstauffer666.github.io/amsterdam/prototypes/js-modules/index.html)
+
 [prototypes/elm-stockmarket](https://thomasstauffer666.github.io/amsterdam/prototypes/elm-stockmarket/src/index.html)
 
 [prototypes/elm-roulette](https://thomasstauffer666.github.io/amsterdam/prototypes/elm-roulette/src/index.html)
