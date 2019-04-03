@@ -1,12 +1,12 @@
 'use strict';
 
-// Firefox/Chrome cache it only this script and do not even make a request to the server anymore, if the script is also added as a <script> it seems to work
+// Firefox/Chrome both cache this script and do not even make a request to the server anymore, if this file is also added as a <script> it seems to work. Chrome also has an option in the developer menu to force reloading the worker script.
 
 if (typeof window === 'undefined') {
-  importScripts('require.js');
-  importScripts('config.js');
-  importScripts('functions.js');
-  importScripts('server.js');
+  self.importScripts('require.js');
+  self.importScripts('config.js');
+  self.importScripts('functions.js');
+  self.importScripts('server.js');
 
   const server = require('./server.js');
 
