@@ -7,10 +7,11 @@ if (typeof window === 'undefined') {
   self.importScripts('config.js');
   self.importScripts('functions.js');
   self.importScripts('server.js');
+  self.importScripts('sector.js');
 
   const server = require('./server.js');
 
-  self.onmessage = server.serverMessageFromWorker;
-  server.serverWorkerOpen();
+  self.onmessage = event => server.serverMessageFromClient(0, undefined, event.data);
+  server.serverOpen(0, undefined);
   server.worldStartup();
 }

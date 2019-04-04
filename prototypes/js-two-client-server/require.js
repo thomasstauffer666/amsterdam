@@ -4,6 +4,9 @@ const require = (function() {
   const pathToObject = {
     './config.js': () => Config(),
     './server.js': () => Server(),
+    './sector.js': () => Sector(),
+    './functions.js': () => Functions(),
+    './connection.js': () => Connection(),
   };
   const cache = {};
 

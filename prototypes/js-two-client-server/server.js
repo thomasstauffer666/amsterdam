@@ -1,14 +1,18 @@
 'use strict';
 
+// TODO move all connections methods into its own object
+
 function Server() {
   const config = require('./config.js');
+  const sector = require('./sector.js');
+  const functions = require('./functions.js');
 
-  // TODO remove this global
   const IS_NODE_RUNNING = typeof module === 'object';
 
   // Model
+
   const world = {
-    map: undefined,
+    sector: undefined,
     players: {},
     connections: {},
   };
@@ -47,16 +51,7 @@ function Server() {
     worldReceiveMessage(connectionID, message);
   }
 
-  function serverMessageFromWorker(event) {
-    serverMessageFromClient(0, undefined, event.data);
-  }
-
-  function serverWorkerOpen() {
-    const connectionID = 0;
-    serverSocketConnectionOpen(connectionID);
-  }
-
-  function serverSocketConnectionOpen(connectionID, connection) {
+  function serverOpen(connectionID, connection) {
     world.connections[connectionID] = {
       connection: connection,
       playerName: undefined,
@@ -67,112 +62,95 @@ function Server() {
     delete world.connections[connectionID];
   }
 
-  function serverMessageFromSocket(connectionID, connection, event) {
-    serverMessageFromClient(connectionID, connection, event);
-  }
-
   // World
 
-  // 1024 x 1024 JSON.stringify -> ca. 11 MB
-  function mapCreate(width, height) {
-    // TODO take Uint8/16/32Array, but this needs to be converted manually because JSON does not know about it
-    const map = {
-      width: width,
-      height: height,
-      blockSize: 16,
-      blocks: new Array(width * height),
-    };
-
-    for (let y = 0; y < height; y += 1) {
-      for (let x = 0; x < width; x += 1) {
-        const index = y * width + x;
-        let nr = config.blockNames.Air;
-        if (random(6) > 1) {
-          nr = config.blockNames.Wood;
-        }
-        if (y == 2 && x == 2) {
-          nr = config.blockNames.Fire;
-        }
-        map.blocks[index] = nr;
-      }
-    }
-
-    return map;
-  }
-
-  function playerCreate(name, password) {
+  function playerRegister(name, password) {
     const player = {
       name: name,
       password: password,
+      x: 100,
+      y: 100,
+      state: '',
       blockUpdates: [],
     };
     return player;
   }
 
-  function worldReceiveMessage(connectionID, message) {
-    if (message.type === 'chat') {
-      // TODO add name from player to text
-      const playerName = world.connections[connectionID].playerName;
-      serverSendMessageToAllClients({type: 'chat', text: playerName + ': ' + message.text});
-    } else if (message.type === 'register') {
-      const name = message.name;
-      if (!(name in world.players)) {
-        world.players[name] = playerCreate(name, message.password);
-      }
-    } else if (message.type === 'login') {
-      const name = message.name;
-      if (name in world.players && world.players[name].password === message.password) {
-        world.connections[connectionID].playerName = name;
-        serverSendMessageToOneClient(connectionID, {type: 'map-state', map: world.map});
-      } else {
-        serverSendMessageToOneClient(connectionID, {type: 'error', text: 'Invalid Credentials'});
-      }
-    } else if (message.type === 'action-start') {
-      if (message.action === 'use') {
-        const playerName = world.connections[connectionID].playerName;
-        const index = Math.floor((world.map.width * world.map.height) / 2);
+  function worldReceiveMessage(connectionID, messages) {
+    const connection = world.connections[connectionID];
+    const playerName = connection.playerName;
+    const player = world.players[playerName];
+
+    for (let i = 0; i < messages.length; i += 1) {
+      const message = messages[i];
+      // TODO maybe it is better to not send messages here and just store them for later?
+
+      if (message.type === 'chat') {
+        serverSendMessageToAllClients([{type: 'chat', text: playerName + ' ' + Date.now() + ': ' + message.text}]);
+      } else if (message.type === 'register') {
+        const name = message.name;
+        const password = message.password;
+        if (name.length > 1 && password.length > 1 && !(name in world.players)) {
+          world.players[name] = playerRegister(name, password);
+        } else {
+          serverSendMessageToOneClient(connectionID, [{type: 'error', text: 'Invalid Credentials'}]);
+        }
+      } else if (message.type === 'login') {
+        const name = message.name;
+        if (name in world.players && world.players[name].password === message.password) {
+          world.connections[connectionID].playerName = name;
+          serverSendMessageToOneClient(connectionID, [{type: 'sector-state', sector: world.sector}]);
+        } else {
+          serverSendMessageToOneClient(connectionID, [{type: 'error', text: 'Invalid Credentials'}]);
+        }
+      } else if (message.type === 'action-start') {
+        if (message.action === 'use') {
+          const index = Math.floor((world.sector.width * world.sector.height) / 2);
+          world.players[playerName].blockUpdates.push([index, config.blockNames.Fire]);
+        } else if (message.action === 'left') {
+          // TODO
+        } else if (message.action === 'right') {
+          // TODO
+        } else if (message.action === 'jump') {
+          // TODO
+        }
+      } else if (message.type === 'action-stop') {
+        // TODO
+      } else if (message.type === 'block-set') {
+        const index = Math.floor((world.sector.width * world.sector.height) / 2);
         world.players[playerName].blockUpdates.push([index, config.blockNames.Fire]);
+      } else {
+        console.log('server: unknown message from client', message);
       }
-    } else if (message.type === 'action-stop') {
-      // TODO
-    } else {
-      console.log('server: unknown message from client', message);
-    }
-  }
-
-  function random(upperExclusive) {
-    return Math.floor(Math.random() * upperExclusive);
-  }
-
-  function mapMergeBlocks(map, updates) {
-    for (let i = 0; i < updates.length; i += 1) {
-      const [index, nr] = updates[i];
-      map.blocks[index] = nr;
     }
   }
 
   function worldTick() {
     //serverSendMessageToAllClients({type: 'debug', message: 'tick'});
 
-    const map = world.map;
-    const blocks = map.blocks;
+    const blocks = world.sector.blocks;
 
-    //const t1 = performance.now();
+    const timer = new functions.Timer();
 
     const blockUpdates = [];
-
+    // TODO only go through active players
     for (const playerName in world.players) {
       blockUpdates.push(...world.players[playerName].blockUpdates);
       world.players[playerName].blockUpdates = [];
     }
 
-    for (let y = 1; y < map.height - 1; y += 1) {
-      for (let x = 1; x < map.width - 1; x += 1) {
-        const index = y * map.width + x;
-        const indexL = y * map.width + x - 1;
-        const indexR = y * map.width + x + 1;
-        const indexT = (y - 1) * map.width + x;
-        const indexB = (y + 1) * map.width + x;
+    //const connection = world.connections[connectionID];
+    //const playerName = connection.playerName;
+    //const player = world.players[playerName];
+
+    for (let y = 1; y < world.sector.height - 1; y += 1) {
+      for (let x = 1; x < world.sector.width - 1; x += 1) {
+        const index = y * world.sector.width + x;
+        // Left/Right/Top/Bottom
+        const indexL = y * world.sector.width + x - 1;
+        const indexR = y * world.sector.width + x + 1;
+        const indexT = (y - 1) * world.sector.width + x;
+        const indexB = (y + 1) * world.sector.width + x;
         if (blocks[index] === config.blockNames.Wood) {
           if (blocks[indexL] === config.blockNames.Fire || blocks[indexR] === config.blockNames.Fire || blocks[indexT] === config.blockNames.Fire || blocks[indexB] === config.blockNames.Fire) {
             blockUpdates.push([index, config.blockNames.Fire]);
@@ -181,32 +159,28 @@ function Server() {
       }
     }
 
-    //const t2 = performance.now();
+    const deltaTimeMilliseconds = timer.elapsedMilliseconds();
 
+    sector.mergeBlocks(world.sector, blockUpdates);
     if (blockUpdates.length > 0) {
-      serverSendMessageToAllClients({type: 'map-update', updates: blockUpdates});
+      serverSendMessageToAllClients([{type: 'sector-update', updates: blockUpdates}]);
     }
-    mapMergeBlocks(world.map, blockUpdates);
 
     const tickMs = 500;
     setTimeout(worldTick, tickMs);
   }
 
   function worldStartup() {
-    const factor = 0.5;
-    world.map = mapCreate(Math.floor(140 * factor), Math.floor(70 * factor));
+    const sizeFactor = 0.5;
+    world.sector = sector.create(Math.floor(140 * sizeFactor), Math.floor(70 * sizeFactor));
     worldTick();
   }
 
   return {
-    mapMergeBlocks: mapMergeBlocks,
-    mapCreate: mapCreate,
     worldStartup: worldStartup,
-    serverWorkerOpen: serverWorkerOpen,
-    serverMessageFromWorker: serverMessageFromWorker,
-    serverSocketConnectionOpen: serverSocketConnectionOpen,
+    serverOpen: serverOpen,
+    serverMessageFromClient: serverMessageFromClient,
     serverSocketConnectionClose: serverSocketConnectionClose,
-    serverMessageFromSocket: serverMessageFromSocket,
   };
 }
 
