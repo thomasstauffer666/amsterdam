@@ -4,7 +4,7 @@ const http = require('http');
 const sockjs = require('sockjs');
 
 const config = require('./config.js');
-const server = require('./server.js'); // TODO rename to server
+const server = require('./server.js');
 
 (() => {
   let uniqueConnectionID = 0;
@@ -18,7 +18,7 @@ const server = require('./server.js'); // TODO rename to server
       server.serverMessageFromClient(connectionID, connection, message);
     });
     connection.on('close', function() {
-      server.serverSocketConnectionClose(connectionID, connection);
+      server.serverClose(connectionID, connection);
     });
   });
 

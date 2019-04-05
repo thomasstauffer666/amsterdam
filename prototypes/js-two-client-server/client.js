@@ -4,6 +4,7 @@
   const config = require('./config.js');
   const functions = require('./functions.js');
   const sector = require('./sector.js');
+  const worldData = require('../../asset/test-tiled/world-data.js');
 
   const state = {
     serverRunsInClient: false,
@@ -40,19 +41,31 @@
     }
   };
 
-  const blocksLoad = async () => {
-    return await Promise.all(
-      config.blockFileNames.map(fileName => {
-        return functions.imageLoad(fileName);
-      })
-    );
+  const tilesLoad = async () => {
+    if(false) {
+      const path = '../../asset/block-16x16/';
+      const urls = [path + 'air.png', path + 'cave.png', path + 'dirt.png', path + 'grass.png', path + 'light.png', path + 'night.png', path + 'steel.png', path + 'wall.png', path + 'wood.png', path + 'gas.png', path + 'fire.png', path + 'water.png'];
+
+      return await Promise.all(
+        urls.map(fileName => {
+          return functions.imageLoad(fileName);
+        })
+      );
+    } else {
+      const path = '../../asset//';
+      return await Promise.all(
+        worldData.tileSet.map(url => {
+          return functions.imageLoad(path + url);
+        })
+      );
+    }
   };
 
-  const drawBlocks = (ctx, blocks, sector) => {
+  const drawBlocks = (ctx, tiles, sector) => {
     for (let y = 0; y < sector.height; y += 1) {
       for (let x = 0; x < sector.width; x += 1) {
         const index = y * sector.width + x;
-        ctx.drawImage(blocks[sector.blocks[index]], x * sector.blockSize, y * sector.blockSize);
+        ctx.drawImage(tiles[sector.tiles[index]], x * sector.tileSize, y * sector.tileSize);
       }
     }
   };
@@ -124,8 +137,8 @@
     const ctx = canvas.getContext('2d');
     clear(ctx);
     const debugRenderNode = document.getElementById('debug-render');
-    const blocks = await blocksLoad();
-    await serverConnect(true ? '127.0.0.1' : '', receive);
+    const tiles = await tilesLoad();
+    await serverConnect(false ? '127.0.0.1' : '', receive);
     serverSendMessage([{type: 'register', name: 'Tom', password: '42'}]);
     serverSendMessage([{type: 'login', name: 'Tom', password: '42'}]);
     serverSendMessage([{type: 'chat', text: 'Hello World'}]);
@@ -135,12 +148,12 @@
 
     const loop = () => {
       const timer = new functions.Timer();
-      clear(ctx); // not necessary later if sector is already as big as the screen and/or there is/are background images
-      drawBlocks(ctx, blocks, state.sector);
+      clear(ctx); // not necessary, if sector is already as big as the screen and/or there is/are background images
+      drawBlocks(ctx, tiles, state.sector);
       const deltaTimeMilliseconds = timer.elapsedMilliseconds();
 
       state.frameCount += 1;
-      debugRenderNode.innerHTML = 'Frames:' + state.frameCount + ' DT[ms]:' + Math.floor(deltaTimeMilliseconds);
+      debugRenderNode.textContent = 'Frames:' + state.frameCount + ' DT[ms]:' + Math.floor(deltaTimeMilliseconds);
       window.requestAnimationFrame(loop);
     };
 

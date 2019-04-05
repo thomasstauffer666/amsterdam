@@ -7,6 +7,7 @@ const require = (function() {
     './sector.js': () => Sector(),
     './functions.js': () => Functions(),
     './connection.js': () => Connection(),
+    '../../asset/test-tiled/world-data.js': () => WorldData(),
   };
   const cache = {};
 

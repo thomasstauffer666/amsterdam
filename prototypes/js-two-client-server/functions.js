@@ -17,12 +17,26 @@ const Functions = () => {
     return Math.floor(Math.random() * upperExclusive);
   };
 
-  const imageLoad = fileName => {
+  const imageLoad = url => {
     return new Promise((resolve, reject) => {
       const image = new Image();
       image.onload = () => resolve(image);
-      image.onerror = () => reject(`Cannot Load '${fileName}'`);
-      image.src = fileName;
+      image.onerror = () => reject(`Cannot Load '${url}'`);
+      image.src = url;
+    });
+  };
+
+  const fileLoad = url => {
+    return new Promise((resolve, reject) => {
+      const request = new XMLHttpRequest();
+      request.onreadystatechange = () => {
+        if (request.readyState == XMLHttpRequest.DONE && request.status === 200) {
+          resolve(request.response);
+        }
+      };
+      const asynch = true;
+      request.open('GET', url, true);
+      request.send();
     });
   };
 
@@ -47,6 +61,7 @@ const Functions = () => {
 
   return {
     imageLoad: imageLoad,
+    fileLoad: fileLoad,
     clamp: clamp,
     random: random,
     Timer: Timer,
