@@ -8,6 +8,7 @@ const require = (function() {
     './functions.js': () => Functions(),
     './connection.js': () => Connection(),
     '../../asset/test-tiled/world-data.js': () => WorldData(),
+    '../../asset/test-tiled/world-tileset.js': () => WorldTileSet(),
   };
   const cache = {};
 

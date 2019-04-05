@@ -11,6 +11,7 @@ if (typeof window === 'undefined') {
   self.importScripts('server.js');
   self.importScripts('sector.js');
   self.importScripts('../../asset/test-tiled/world-data.js');
+  self.importScripts('../../asset/test-tiled/world-tileset.js');
 
   const server = require('./server.js');
 

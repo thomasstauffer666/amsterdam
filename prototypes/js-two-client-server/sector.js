@@ -3,7 +3,7 @@
 const Sector = () => {
   const config = require('./config.js');
   const functions = require('./functions.js');
-  const worldData = require('../../asset/test-tiled/world-data.js');
+  const worldTileSet = require('../../asset/test-tiled/world-tileset.js');
 
   // TODO read this names from json file
   const TILE_NAMES = {
@@ -12,7 +12,7 @@ const Sector = () => {
     Fire: 3,
   };
   
-  const load = () => {
+  const load = (worldData) => {
     const sector = create(worldData.width, worldData.height);
     sector.tiles = worldData.tiles;
     for(let i = 0; i < sector.tiles.length; i += 1) {

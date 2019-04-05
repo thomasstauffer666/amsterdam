@@ -4,7 +4,7 @@
   const config = require('./config.js');
   const functions = require('./functions.js');
   const sector = require('./sector.js');
-  const worldData = require('../../asset/test-tiled/world-data.js');
+  const worldTileSet = require('../../asset/test-tiled/world-tileset.js');
 
   const state = {
     serverRunsInClient: false,
@@ -54,7 +54,7 @@
     } else {
       const path = '../../asset//';
       return await Promise.all(
-        worldData.tileSet.map(url => {
+        worldTileSet.tileSet.map(url => {
           return functions.imageLoad(path + url);
         })
       );

@@ -4,6 +4,7 @@ const Server = () => {
   const config = require('./config.js');
   const sector = require('./sector.js');
   const functions = require('./functions.js');
+  const worldData = require('../../asset/test-tiled/world-data.js');
 
   const IS_NODE_RUNNING = typeof module === 'object';
 
@@ -158,7 +159,7 @@ const Server = () => {
   const worldStartup = () => {
     //const sizeFactor = 0.5;
     //world.sector = sector.create(Math.floor(140 * sizeFactor), Math.floor(70 * sizeFactor));
-    world.sector = sector.load();
+    world.sector = sector.load(worldData);
     worldTick();
   };
 

@@ -6,25 +6,41 @@ const map = JSON.parse(fs.readFileSync('32x32.json'));
 
 // TODO assert tilewidth === tileheight
 
-const world = {
+const worldTileSet = {
   tileSet: tiles.tiles.map(tile => {
     return tile.image;
   }),
   tileSize: tiles.tilewidth,
+};
+
+const worldData = {
   tiles: map.layers[0].data,
   width: map.layers[0].width,
   height: map.layers[0].height,
 };
 
-const json = JSON.stringify(world);
-const js = `'use strict';
+const jsonWorldData = JSON.stringify(worldData);
+const jsWorldData = `'use strict';
 
-const WorldData = () => (${json});
+const WorldData = () => (${jsonWorldData});
 
 if (typeof module === 'object') {
   module.exports = WorldData();
 }
 `
 
-//fs.writeFileSync('world-data.json', json);
-fs.writeFileSync('world-data.js', js);
+const jsonWorldTileSet = JSON.stringify(worldTileSet);
+const jsWorldTileSet = `'use strict';
+
+const WorldTileSet = () => (${jsonWorldTileSet});
+
+if (typeof module === 'object') {
+  module.exports = WorldTileSet();
+}
+`
+
+//fs.writeFileSync('world-data.json', jsonWorldData);
+fs.writeFileSync('world-data.js', jsWorldData);
+
+//fs.writeFileSync('world-data.json', jsonWorldTileSet);
+fs.writeFileSync('world-tileset.js', jsWorldTileSet);
