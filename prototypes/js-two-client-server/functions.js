@@ -1,6 +1,6 @@
 'use strict';
 
-function Functions() {
+const Functions = () => {
   const IS_NODE_RUNNING = typeof module === 'object';
 
   const clamp = (value, min, max) => {
@@ -51,7 +51,7 @@ function Functions() {
     random: random,
     Timer: Timer,
   };
-}
+};
 
 if (typeof module === 'object') {
   module.exports = Functions();

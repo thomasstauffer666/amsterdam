@@ -1,16 +1,16 @@
 'use strict';
 
-function Sector() {
+const Sector = () => {
   const config = require('./config.js');
   const functions = require('./functions.js');
 
   // 1024 x 1024 JSON.stringify -> ca. 11 MB
   const create = (width, height) => {
-    // TODO take Uint8/16/32Array, but this needs to be converted manually because JSON does not know about it
     const sector = {
       width: width,
       height: height,
       blockSize: 16,
+      // Uint8/16/32Array maybe is faster for blocks, but needs to be converted manually when transfered with JSON
       blocks: new Array(width * height),
     };
 
@@ -42,7 +42,7 @@ function Sector() {
     create: create,
     mergeBlocks: mergeBlocks,
   };
-}
+};
 
 if (typeof module === 'object') {
   module.exports = Sector();

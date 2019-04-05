@@ -1,8 +1,6 @@
 'use strict';
 
-// TODO move all connections methods into its own object
-
-function Server() {
+const Server = () => {
   const config = require('./config.js');
   const sector = require('./sector.js');
   const functions = require('./functions.js');
@@ -19,7 +17,7 @@ function Server() {
 
   // Server
 
-  function serverSendMessageToAllClients(message) {
+  const serverSendMessageToAllClients = message => {
     const string = JSON.stringify(message);
     if (IS_NODE_RUNNING) {
       for (let connectionID in world.connections) {
@@ -29,9 +27,9 @@ function Server() {
     } else {
       self.postMessage(string);
     }
-  }
+  };
 
-  function serverSendMessageToOneClient(connectionID, message) {
+  const serverSendMessageToOneClient = (connectionID, message) => {
     const string = JSON.stringify(message);
     const length = string.length;
     if (length > 1000) {
@@ -44,27 +42,27 @@ function Server() {
     } else {
       self.postMessage(string);
     }
-  }
+  };
 
-  function serverMessageFromClient(connectionID, connection, event) {
+  const serverMessageFromClient = (connectionID, connection, event) => {
     const message = JSON.parse(event);
     worldReceiveMessage(connectionID, message);
-  }
+  };
 
-  function serverOpen(connectionID, connection) {
+  const serverOpen = (connectionID, connection) => {
     world.connections[connectionID] = {
       connection: connection,
       playerName: undefined,
     };
-  }
+  };
 
-  function serverSocketConnectionClose(connectionID, connection) {
+  const serverSocketConnectionClose = (connectionID, connection) => {
     delete world.connections[connectionID];
-  }
+  };
 
   // World
 
-  function playerRegister(name, password) {
+  const playerRegister = (name, password) => {
     const player = {
       name: name,
       password: password,
@@ -74,9 +72,9 @@ function Server() {
       blockUpdates: [],
     };
     return player;
-  }
+  };
 
-  function worldReceiveMessage(connectionID, messages) {
+  const worldReceiveMessage = (connectionID, messages) => {
     const connection = world.connections[connectionID];
     const playerName = connection.playerName;
     const player = world.players[playerName];
@@ -93,7 +91,8 @@ function Server() {
         if (name.length > 1 && password.length > 1 && !(name in world.players)) {
           world.players[name] = playerRegister(name, password);
         } else {
-          serverSendMessageToOneClient(connectionID, [{type: 'error', text: 'Invalid Credentials'}]);
+          // TODO from a security standpoint is it better to not give an answer at all?
+          serverSendMessageToOneClient(connectionID, [{type: 'error', text: 'Already Registered'}]);
         }
       } else if (message.type === 'login') {
         const name = message.name;
@@ -123,9 +122,9 @@ function Server() {
         console.log('server: unknown message from client', message);
       }
     }
-  }
+  };
 
-  function worldTick() {
+  const worldTick = () => {
     //serverSendMessageToAllClients({type: 'debug', message: 'tick'});
 
     const blocks = world.sector.blocks;
@@ -168,13 +167,13 @@ function Server() {
 
     const tickMs = 500;
     setTimeout(worldTick, tickMs);
-  }
+  };
 
-  function worldStartup() {
+  const worldStartup = () => {
     const sizeFactor = 0.5;
     world.sector = sector.create(Math.floor(140 * sizeFactor), Math.floor(70 * sizeFactor));
     worldTick();
-  }
+  };
 
   return {
     worldStartup: worldStartup,
@@ -182,7 +181,7 @@ function Server() {
     serverMessageFromClient: serverMessageFromClient,
     serverSocketConnectionClose: serverSocketConnectionClose,
   };
-}
+};
 
 if (typeof module === 'object') {
   module.exports = Server();

@@ -1,6 +1,6 @@
 'use strict';
 
-function Config() {
+const Config = () => {
   // TODO do the BLOCK_ consts belong to sector?
 
   const BLOCKS_PATH = '../../asset/block-16x16/';
@@ -18,7 +18,7 @@ function Config() {
     blockFileNames: BLOCKS,
     blockNames: BLOCK_NAMES,
   };
-}
+};
 
 if (typeof module === 'object') {
   module.exports = Config();
