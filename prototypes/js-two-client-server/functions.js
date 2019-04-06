@@ -26,6 +26,7 @@ const Functions = () => {
     });
   };
 
+  // TODO replace with fetch or remove
   const fileLoad = url => {
     return new Promise((resolve, reject) => {
       const request = new XMLHttpRequest();

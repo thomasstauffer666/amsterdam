@@ -1,17 +1,18 @@
 'use strict';
 
-(function() {
+(() => {
   const config = require('./config.js');
   const functions = require('./functions.js');
   const sector = require('./sector.js');
-  const worldTileSet = require('../../asset/test-tiled/world-tileset.js');
+  const worldTileset = require('../../asset/test-tiled/world-tileset.js');
 
   const state = {
     serverRunsInClient: false,
-    worker: undefined,
-    socket: undefined,
+    worker: null,
+    socket: null,
     frameCount: 0,
-    sector: undefined,
+    sector: null,
+    avatar: null, // TODO instead of just position the full player state from server?
   };
 
   const serverConnect = async (url, handler) => {
@@ -41,34 +42,45 @@
     }
   };
 
-  const tilesLoad = async () => {
-    if(false) {
+  // TODO move to sector?
+  // TOOD rename to tilesetLoad
+  const tilesetLoad = async () => {
+    if (false) {
       const path = '../../asset/block-16x16/';
       const urls = [path + 'air.png', path + 'cave.png', path + 'dirt.png', path + 'grass.png', path + 'light.png', path + 'night.png', path + 'steel.png', path + 'wall.png', path + 'wood.png', path + 'gas.png', path + 'fire.png', path + 'water.png'];
-
-      return await Promise.all(
+      const images = await Promise.all(
         urls.map(fileName => {
           return functions.imageLoad(fileName);
         })
       );
+      return {
+        images: images,
+        size: 16,
+      };
     } else {
       const path = '../../asset//';
-      return await Promise.all(
-        worldTileSet.tileSet.map(url => {
+      const images = await Promise.all(
+        worldTileset.urls.map(url => {
           return functions.imageLoad(path + url);
         })
       );
+      return {
+        images: images,
+        size: worldTileset.size,
+      };
     }
   };
 
-  const drawBlocks = (ctx, tiles, sector) => {
+  const drawBlocks = (ctx, tileset, sector) => {
     for (let y = 0; y < sector.height; y += 1) {
       for (let x = 0; x < sector.width; x += 1) {
         const index = y * sector.width + x;
-        ctx.drawImage(tiles[sector.tiles[index]], x * sector.tileSize, y * sector.tileSize);
+        ctx.drawImage(tileset.images[sector.tiles[index]], x * tileset.size, y * tileset.size);
       }
     }
   };
+
+  //const draw
 
   const clear = ctx => {
     ctx.beginPath();
@@ -120,6 +132,8 @@
         state.sector = message.sector;
       } else if (message.type === 'sector-update') {
         sector.mergeBlocks(state.sector, message.updates);
+      } else if (message.type === 'avatar') {
+        state.avatar = message.avatar;
       } else if (message.type === 'error') {
         console.log('error: ' + message.text);
       } else {
@@ -130,14 +144,13 @@
 
   const main = async () => {
     state.frameCount = 0;
-    state.sector = sector.create(0, 0);
     const canvas = document.getElementById('canvas');
+    // TODO resize if browser windows is resized
     canvas.width = document.body.clientWidth;
     canvas.height = document.body.clientHeight;
     const ctx = canvas.getContext('2d');
     clear(ctx);
-    const debugRenderNode = document.getElementById('debug-render');
-    const tiles = await tilesLoad();
+    const tileset = await tilesetLoad();
     await serverConnect(false ? '127.0.0.1' : '', receive);
     serverSendMessage([{type: 'register', name: 'Tom', password: '42'}]);
     serverSendMessage([{type: 'login', name: 'Tom', password: '42'}]);
@@ -147,9 +160,14 @@
     document.getElementById('control-message-send').addEventListener('click', uiMessage);
 
     const loop = () => {
+      // TODO calc FPS
+
+      const debugRenderNode = document.getElementById('debug-render');
       const timer = new functions.Timer();
-      clear(ctx); // not necessary, if sector is already as big as the screen and/or there is/are background images
-      drawBlocks(ctx, tiles, state.sector);
+      if (state.sector !== null && state.avatar !== null) {
+        clear(ctx); // not necessary, if sector is already as big as the screen and/or there is/are background images
+        drawBlocks(ctx, tileset, state.sector);
+      }
       const deltaTimeMilliseconds = timer.elapsedMilliseconds();
 
       state.frameCount += 1;

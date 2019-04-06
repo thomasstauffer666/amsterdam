@@ -3,7 +3,7 @@
 const Sector = () => {
   const config = require('./config.js');
   const functions = require('./functions.js');
-  const worldTileSet = require('../../asset/test-tiled/world-tileset.js');
+  const worldTileset = require('../../asset/test-tiled/world-tileset.js');
 
   // TODO read this names from json file
   const TILE_NAMES = {
@@ -11,36 +11,37 @@ const Sector = () => {
     Wood: 11,
     Fire: 3,
   };
-  
-  const load = (worldData) => {
-    const sector = create(worldData.width, worldData.height);
-    sector.tiles = worldData.tiles;
-    for(let i = 0; i < sector.tiles.length; i += 1) {
-      sector.tiles[i] = sector.tiles[i] - 1;
-    }
-    
+
+  const load = worldTiles => {
+    const sector = create(worldTiles.width, worldTiles.height);
+    sector.tiles = worldTiles.ids;
     return sector;
+
+    //const sizeFactor = 0.5;
+    //state.sector = sector.create(Math.floor(140 * sizeFactor), Math.floor(70 * sizeFactor));
+
     //const sector = create(32, 32);
     //createRandom(sector);
     //return sector;
-  }
+  };
 
   // 1024 x 1024 JSON.stringify -> ca. 11 MB
   const create = (width, height) => {
     const sector = {
       width: width,
       height: height,
-      tileSize: 16,
       // Uint8/16/32Array maybe is faster for tiles, but needs to be converted manually when transfered with JSON
       tiles: new Array(width * height),
     };
     //sector.tiles.fill(0);
     return sector;
   };
-  
+
   const createRandom = (seed, width, height) => {
+    // TODO js PRNG does not have a seed?
+
     const sector = create(width, height);
-    
+
     for (let y = 0; y < height; y += 1) {
       for (let x = 0; x < width; x += 1) {
         const index = y * width + x;
@@ -54,7 +55,7 @@ const Sector = () => {
         sector.tiles[index] = nr;
       }
     }
-  }
+  };
 
   const mergeBlocks = (sector, updates) => {
     for (let i = 0; i < updates.length; i += 1) {
