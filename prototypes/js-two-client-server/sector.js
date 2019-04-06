@@ -87,11 +87,40 @@ const Sector = () => {
     return tileWorldUpdates;
   };
 
+  const tilesetLoad = async () => {
+    if (false) {
+      const path = '../../asset/block-16x16/';
+      const urls = [path + 'air.png', path + 'cave.png', path + 'dirt.png', path + 'grass.png', path + 'light.png', path + 'night.png', path + 'steel.png', path + 'wall.png', path + 'wood.png', path + 'gas.png', path + 'fire.png', path + 'water.png'];
+      const images = await Promise.all(
+        urls.map(fileName => {
+          return functions.imageLoad(fileName);
+        })
+      );
+      return {
+        images: images,
+        size: 16,
+      };
+    } else {
+      const path = '../../asset//';
+      const images = await Promise.all(
+        worldTileset.urls.map(url => {
+          return functions.imageLoad(path + url);
+        })
+      );
+      return {
+        images: images,
+        size: worldTileset.size,
+      };
+    }
+  };
+
   return {
     load: load,
     create: create,
     mergeBlocks: mergeBlocks,
     simulationStep: simulationStep,
+    tilesetLoad: tilesetLoad,
+    TILE_NAMES: TILE_NAMES,
   };
 };
 

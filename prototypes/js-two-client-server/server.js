@@ -110,20 +110,20 @@ const Server = () => {
         }
       } else if (message.type === 'action-start') {
         if (message.action === 'use') {
-          const index = Math.floor((state.sector.width * state.sector.height) / 2);
-          connection.player.tileUpdates.push([index, config.tileNames.Fire]);
+          const index = Math.floor((state.sector.width * state.sector.height) / 2 + state.sector.width / 2);
+          connection.player.tileUpdates.push([index, sector.TILE_NAMES.Fire]);
         } else if (message.action === 'left') {
           connection.player.state = 'left'; // TODO walk left?
         } else if (message.action === 'right') {
           connection.player.state = 'right';
         } else if (message.action === 'jump') {
-          // TODO
+          connection.player.state = 'jump';
         }
       } else if (message.type === 'action-stop') {
         connection.player.state = '';
       } else if (message.type === 'tile-set') {
-        const index = Math.floor((state.sector.width * state.sector.height) / 2);
-        connection.player.players[playerName].tileUpdates.push([index, config.tileNames.Fire]);
+        const index = state.sector.width * message.y + message.x;
+        connection.player.tileUpdates.push([index, message.id]);
       } else {
         console.log('server: unknown message from client', message);
       }
@@ -152,9 +152,11 @@ const Server = () => {
 
     connections.forEach(connection => {
       if (connection.player.state === 'left') {
-        player.avatar.x -= 1;
+        connection.player.avatar.x -= 10;
       } else if (connection.player.state === 'right') {
-        player.avatar.x += 1;
+        connection.player.avatar.x += 10;
+      } else if (connection.player.state === 'jump') {
+        connection.player.avatar.y -= 10;
       }
     });
 
@@ -165,6 +167,7 @@ const Server = () => {
 
     const deltaTimeMilliseconds = timer.elapsedMilliseconds();
 
+    // TODO only send if updated
     connections.forEach(connection => {
       serverMessageToOneClient(connection.connectionID, [{type: 'avatar', avatar: connection.player.avatar}]);
     });

@@ -13,7 +13,14 @@
     frameCount: 0,
     sector: null,
     avatar: null, // TODO instead of just position the full player state from server?
+    camera: {
+      // normally is where the avatar is, but maybe can be moved around otherwise?
+      x: 0,
+      y: 0,
+    },
   };
+
+  // TODO nameing: control: receive/send messages & update state, view: show state
 
   const serverConnect = async (url, handler) => {
     state.serverRunsInClient = url === '';
@@ -42,45 +49,28 @@
     }
   };
 
-  // TODO move to sector?
-  // TOOD rename to tilesetLoad
-  const tilesetLoad = async () => {
-    if (false) {
-      const path = '../../asset/block-16x16/';
-      const urls = [path + 'air.png', path + 'cave.png', path + 'dirt.png', path + 'grass.png', path + 'light.png', path + 'night.png', path + 'steel.png', path + 'wall.png', path + 'wood.png', path + 'gas.png', path + 'fire.png', path + 'water.png'];
-      const images = await Promise.all(
-        urls.map(fileName => {
-          return functions.imageLoad(fileName);
-        })
-      );
-      return {
-        images: images,
-        size: 16,
-      };
-    } else {
-      const path = '../../asset//';
-      const images = await Promise.all(
-        worldTileset.urls.map(url => {
-          return functions.imageLoad(path + url);
-        })
-      );
-      return {
-        images: images,
-        size: worldTileset.size,
-      };
-    }
-  };
+  const drawSector = (canvas, ctx, camera, tileset, sector) => {
+    const yMin = Math.max(Math.floor(camera.y / tileset.size), 0);
+    const yMax = Math.min(Math.floor((camera.y + canvas.height) / tileset.size) + 1, sector.height);
+    const xMin = Math.max(Math.floor(camera.x / tileset.size), 0);
+    const xMax = Math.min(Math.floor((camera.x + canvas.width) / tileset.size) + 1, sector.width);
 
-  const drawBlocks = (ctx, tileset, sector) => {
-    for (let y = 0; y < sector.height; y += 1) {
-      for (let x = 0; x < sector.width; x += 1) {
+    let count = 0;
+    for (let y = yMin; y < yMax; y += 1) {
+      for (let x = xMin; x < xMax; x += 1) {
         const index = y * sector.width + x;
-        ctx.drawImage(tileset.images[sector.tiles[index]], x * tileset.size, y * tileset.size);
+        ctx.drawImage(tileset.images[sector.tiles[index]], x * tileset.size - camera.x, y * tileset.size - camera.y);
+        count += 1;
       }
     }
   };
 
-  //const draw
+  const drawSprites = (canvas, ctx, camera, sprites, position) => {
+    // TODO only visible ones
+    const sprite = sprites[0];
+    
+    ctx.drawImage(sprite.image, position.x - camera.x, position.y - camera.y);
+  };
 
   const clear = ctx => {
     ctx.beginPath();
@@ -99,13 +89,25 @@
     // TODO Handle Repeat
 
     const keyToAction = {
-      ArrowLeft: 'left',
-      ArrowRight: 'right',
+      //ArrowLeft: 'left',
+      //ArrowRight: 'right',
       a: 'left',
       d: 'right',
       e: 'use',
       ' ': 'jump',
     };
+
+    // TODO depends on dt
+    const cameraSpeed = 11;
+    if (event.key === 'ArrowLeft') {
+      state.camera.x -= cameraSpeed;
+    } else if (event.key === 'ArrowRight') {
+      state.camera.x += cameraSpeed;
+    } else if (event.key === 'ArrowUp') {
+      state.camera.y -= cameraSpeed;
+    } else if (event.key === 'ArrowDown') {
+      state.camera.y += cameraSpeed;
+    }
 
     if (event.key in keyToAction) {
       const message = {
@@ -150,7 +152,12 @@
     canvas.height = document.body.clientHeight;
     const ctx = canvas.getContext('2d');
     clear(ctx);
-    const tileset = await tilesetLoad();
+    const tileset = await sector.tilesetLoad();
+    const spriteAvatar = {
+      image: await functions.imageLoad('../../asset/test-tiled/avatar.png'),
+      width: 48,
+      height: 48,
+    };
     await serverConnect(false ? '127.0.0.1' : '', receive);
     serverSendMessage([{type: 'register', name: 'Tom', password: '42'}]);
     serverSendMessage([{type: 'login', name: 'Tom', password: '42'}]);
@@ -164,12 +171,16 @@
 
       const debugRenderNode = document.getElementById('debug-render');
       const timer = new functions.Timer();
-      if (state.sector !== null && state.avatar !== null) {
-        clear(ctx); // not necessary, if sector is already as big as the screen and/or there is/are background images
-        drawBlocks(ctx, tileset, state.sector);
-      }
-      const deltaTimeMilliseconds = timer.elapsedMilliseconds();
 
+      if(state.frameCount % 4 == 0) {
+        if (state.sector !== null && state.avatar !== null) {
+          clear(ctx); // not necessary, if sector is already as big as the screen and/or there is/are background images
+          drawSector(canvas, ctx, state.camera, tileset, state.sector);
+          drawSprites(canvas, ctx, state.camera, [spriteAvatar], state.avatar);
+        }
+      }
+
+      const deltaTimeMilliseconds = timer.elapsedMilliseconds();
       state.frameCount += 1;
       debugRenderNode.textContent = 'Frames:' + state.frameCount + ' DT[ms]:' + Math.floor(deltaTimeMilliseconds);
       window.requestAnimationFrame(loop);

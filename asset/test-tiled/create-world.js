@@ -2,7 +2,7 @@
 const fs = require('fs');
 
 const tiles = JSON.parse(fs.readFileSync('Test.json'));
-const map = JSON.parse(fs.readFileSync('32x32.json'));
+const map = JSON.parse(fs.readFileSync('128x128.json'));
 
 // TODO assert tilewidth === tileheight
 
