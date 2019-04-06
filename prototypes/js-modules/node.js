@@ -16,4 +16,4 @@ if node.js is renamed to node.mjs and module.js to module.mjs then it seems to w
 
 import * as my from './module.js';
 
-my.print('Hello From Webworker');
+my.print('Hello From Node');
