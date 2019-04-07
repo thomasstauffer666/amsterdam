@@ -11,15 +11,17 @@ const Server = () => {
   // Model
 
   const state = {
+    timeStarted: Date.now(),
     sector: undefined,
     players: {},
-    connections: {},
+    connections: {}, // TODO rename playersActive? and players = playersAll? but connections contains more than just a player
   };
 
   // Server
 
+  // TODO maybe remove this one as it seems less and less useful
+  // TODO at the moment only send a message to logged in players, maybe there are some server messages for everyone
   const serverMessageToAllClients = message => {
-    // TODO at the moment only send a message to logged in players, maybe there are some server messages for everyone
     const string = JSON.stringify(message);
     for (let connectionID in state.connections) {
       const connection = state.connections[connectionID].connection;
@@ -39,9 +41,9 @@ const Server = () => {
     if (length > 1000) {
       console.log(`server: warning message is ${length} bytes`);
     }
-
+    const connection = state.connections[connectionID].connection;
+    state.connections[connectionID].sentBytes += length; // TODO do not lookup connectionID twice
     if (IS_NODE_RUNNING) {
-      const connection = state.connections[connectionID].connection;
       connection.write(string);
     } else {
       self.postMessage(string);
@@ -57,6 +59,7 @@ const Server = () => {
     state.connections[connectionID] = {
       connectionID: connectionID,
       connection: connection,
+      sentBytes: 0,
       player: null,
     };
   };
@@ -90,14 +93,14 @@ const Server = () => {
       const message = messages[i];
 
       if (message.type === 'chat') {
-        serverMessageToAllClients([{type: 'chat', text: connection.player.name + ' ' + Date.now() + ': ' + message.text}]);
+        serverMessageToAllClients([{type: 'chat', millisecondsSinceStart: Date.now() - state.timeStarted, name: connection.player.name, text: message.text}]);
       } else if (message.type === 'register') {
         const name = message.name;
         const password = message.password;
         if (name.length > 1 && password.length > 1 && !(name in state.players)) {
           state.players[name] = playerCreate(name, password);
         } else {
-          // TODO from a security standpoint is it better to not give an answer at all?
+          // TODO from a security standpoint is it better to not give an answer at all? also slow it down to avoid DOS? also with login?
           serverMessageToOneClient(connectionID, [{type: 'error', text: 'Already Registered'}]);
         }
       } else if (message.type === 'login') {
@@ -124,13 +127,17 @@ const Server = () => {
       } else if (message.type === 'tile-set') {
         const index = state.sector.width * message.y + message.x;
         connection.player.tileUpdates.push([index, message.id]);
+      } else if (message.type === 'log-TODO1') {
+        // TODO
+      } else if (message.type === 'log-TODO2') {
+        // TODO
       } else {
         console.log('server: unknown message from client', message);
       }
     }
   };
 
-  const validConnections = () => {
+  const activeConnections = () => {
     return Object.keys(state.connections)
       .map(connectionID => {
         return state.connections[connectionID];
@@ -141,7 +148,7 @@ const Server = () => {
   const worldTick = () => {
     const timer = new functions.Timer();
 
-    const connections = validConnections();
+    const connections = activeConnections();
 
     const tilePlayerUpdates = [];
     // TODO only go through active players
@@ -167,11 +174,14 @@ const Server = () => {
 
     const deltaTimeMilliseconds = timer.elapsedMilliseconds();
 
+    //console.log(deltaTimeMilliseconds);
+
     // TODO only send if updated
     connections.forEach(connection => {
       serverMessageToOneClient(connection.connectionID, [{type: 'avatar', avatar: connection.player.avatar}]);
     });
 
+    // TODO only send if player is this map
     if (tileUpdates.length > 0) {
       serverMessageToAllClients([{type: 'sector-update', updates: tileUpdates}]);
     }

@@ -6,6 +6,8 @@
   const sector = require('./sector.js');
   const worldTileset = require('../../asset/test-tiled/world-tileset.js');
 
+  // Model
+
   const state = {
     serverRunsInClient: false,
     worker: null,
@@ -50,12 +52,18 @@
   };
 
   const drawSector = (canvas, ctx, camera, tileset, sector) => {
+    /*
+    screen 1920 x 1080
+    tile size 16
+    -> maximum tiles to draw = 121 * 68 = 92928
+    */
+
     const yMin = Math.max(Math.floor(camera.y / tileset.size), 0);
     const yMax = Math.min(Math.floor((camera.y + canvas.height) / tileset.size) + 1, sector.height);
     const xMin = Math.max(Math.floor(camera.x / tileset.size), 0);
     const xMax = Math.min(Math.floor((camera.x + canvas.width) / tileset.size) + 1, sector.width);
 
-    let count = 0;
+    let count = 0; // only statistics
     for (let y = yMin; y < yMax; y += 1) {
       for (let x = xMin; x < xMax; x += 1) {
         const index = y * sector.width + x;
@@ -63,13 +71,16 @@
         count += 1;
       }
     }
+    // console.info(count);
   };
 
   const drawSprites = (canvas, ctx, camera, sprites, position) => {
-    // TODO only visible ones
-    const sprite = sprites[0];
-    
-    ctx.drawImage(sprite.image, position.x - camera.x, position.y - camera.y);
+    sprites.forEach(sprite => {
+      const isVisible = true; // TODO only visible ones
+      if(isVisible) {
+        ctx.drawImage(sprite.image, position.x - camera.x, position.y - camera.y);
+      }
+    });
   };
 
   const clear = ctx => {
@@ -85,9 +96,7 @@
     serverSendMessage(message);
   };
 
-  const input = event => {
-    // TODO Handle Repeat
-
+  const inputListener = event => {
     const keyToAction = {
       //ArrowLeft: 'left',
       //ArrowRight: 'right',
@@ -96,18 +105,6 @@
       e: 'use',
       ' ': 'jump',
     };
-
-    // TODO depends on dt
-    const cameraSpeed = 11;
-    if (event.key === 'ArrowLeft') {
-      state.camera.x -= cameraSpeed;
-    } else if (event.key === 'ArrowRight') {
-      state.camera.x += cameraSpeed;
-    } else if (event.key === 'ArrowUp') {
-      state.camera.y -= cameraSpeed;
-    } else if (event.key === 'ArrowDown') {
-      state.camera.y += cameraSpeed;
-    }
 
     if (event.key in keyToAction) {
       const message = {
@@ -128,7 +125,7 @@
           chatNode.removeChild(chatNode.firstChild);
         }
         const p = document.createElement('p');
-        p.textContent = message.text;
+        p.textContent = message.millisecondsSinceStart + 'ms ' + message.name + ': ' + message.text;
         chatNode.appendChild(p);
       } else if (message.type === 'sector-state') {
         state.sector = message.sector;
@@ -147,9 +144,12 @@
   const main = async () => {
     state.frameCount = 0;
     const canvas = document.getElementById('canvas');
-    // TODO resize if browser windows is resized
-    canvas.width = document.body.clientWidth;
-    canvas.height = document.body.clientHeight;
+    const resize = () => {
+      canvas.width = document.body.clientWidth;
+      canvas.height = document.body.clientHeight;
+    }
+    resize();
+    window.addEventListener('resize', resize);
     const ctx = canvas.getContext('2d');
     clear(ctx);
     const tileset = await sector.tilesetLoad();
@@ -162,19 +162,36 @@
     serverSendMessage([{type: 'register', name: 'Tom', password: '42'}]);
     serverSendMessage([{type: 'login', name: 'Tom', password: '42'}]);
     serverSendMessage([{type: 'chat', text: 'Hello World'}]);
-    document.addEventListener('keydown', input);
-    document.addEventListener('keyup', input);
+    const input = new functions.Input();
+    //document.addEventListener('keydown', input);
+    //document.addEventListener('keyup', input);
+    input.setEventListener(inputListener);
     document.getElementById('control-message-send').addEventListener('click', uiMessage);
 
     const loop = () => {
-      // TODO calc FPS
+      // TODO create a FPS, delta time class
 
       const debugRenderNode = document.getElementById('debug-render');
       const timer = new functions.Timer();
 
-      if(state.frameCount % 4 == 0) {
+      // TODO should depend on delta time
+      const cameraSpeed = 11;
+      if (input.isPressed('ArrowLeft')) {
+        state.camera.x -= cameraSpeed;
+      }
+      if (input.isPressed('ArrowRight')) {
+        state.camera.x += cameraSpeed;
+      }
+      if (input.isPressed('ArrowUp')) {
+        state.camera.y -= cameraSpeed;
+      }
+      if (input.isPressed('ArrowDown')) {
+        state.camera.y += cameraSpeed;
+      }
+
+      if (state.frameCount % 1 == 0) {
         if (state.sector !== null && state.avatar !== null) {
-          clear(ctx); // not necessary, if sector is already as big as the screen and/or there is/are background images
+          clear(ctx); // not necessary anymore sector/sprites are big enough to overdraw anything
           drawSector(canvas, ctx, state.camera, tileset, state.sector);
           drawSprites(canvas, ctx, state.camera, [spriteAvatar], state.avatar);
         }
