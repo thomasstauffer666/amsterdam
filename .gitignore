@@ -3,3 +3,4 @@
 **/node_modules
 
 asset/test-tiled/*\.json
+prototypes/ts-modules/*\.js
