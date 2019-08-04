@@ -38,14 +38,14 @@ const Functions = () => {
         }
       };
       const asynch = true;
-      request.open('GET', url, true);
+      request.open('GET', url, asynch);
       request.send();
     });
   };
 
   class Timer {
     constructor() {
-      this.timeStarted = undefined;
+      this.timeStarted = null;
       this.start();
     }
     
